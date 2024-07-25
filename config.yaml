@@ -1,0 +1,12 @@
+serverConfig:
+  host: 127.0.0.1
+  port: 8888
+dbConfig:
+  path: ./misgo.db
+  idleConn: 2 # 设置最大空闲连接数
+  maxConn: 100 # 设置最大连接数
+  maxLifeTime: 60 # 设置连接最大存活时间(分钟)
+
+logConfig:
+  level: info
+  logPath: ./log

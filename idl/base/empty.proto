@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package base;
+
+option go_package = "base";
+
+import "api.proto";
+
+
+
+
+message Empty {}
+
+
+

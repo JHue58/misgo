@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package record;
+
+option go_package = "record";
+
+import "api.proto";
+
+
+
+
+message RecordReq {
+  string UID = 1[(api.body)="uid"];
+  string Tag = 2[(api.body)="tag"];
+  string Content = 3[(api.body)="content"];
+  string Extend = 4[(api.body)="extend"];
+}
+
+message RecordResp {
+  string Content = 1;
+}
+
+
+service RecordService{
+  rpc Record(RecordReq) returns(RecordResp) {
+    option (api.put) = "api/record";
+  }
+}

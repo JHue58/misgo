@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package ping;
+
+option go_package = "ping";
+
+import "api.proto";
+import "base/empty.proto";
+
+
+message PingResp {
+  string Message = 1;
+  string Date = 2;
+}
+
+
+service PingService{
+  rpc Ping(base.Empty) returns(PingResp) {
+    option (api.get) = "api/ping";
+  }
+}
