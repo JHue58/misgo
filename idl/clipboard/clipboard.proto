@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package clipboard;
+
+option go_package = "clipboard";
+
+import "api.proto";
+import "base/empty.proto";
+
+
+message ClipResp {
+  string Message = 1;
+  map<int64,string> Board = 2;
+}
+
+message ClipReq{
+  string UID = 1[(api.body)="uid"];
+  string Content = 2[(api.body)="content"];
+}
+
+
+service ClipBoardService{
+  rpc ClipBoardGet(base.Empty) returns(ClipResp) {
+    option (api.get) = "api/clipboard";
+  }
+  rpc ClipBoardPut(ClipReq) returns(ClipResp) {
+    option (api.put) = "api/clipboard";
+  }
+}

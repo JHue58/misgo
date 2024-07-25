@@ -26,9 +26,9 @@ func Record(ctx context.Context, c *app.RequestContext) {
 		request.ErrorRequest(c, request.ParmaError, err.Error())
 		return
 	}
-	user, ok := user.ExtractUser(ctx)
+	u, ok := user.ExtractUser(ctx)
 	if !ok {
-		request.ErrorRequest(c, request.ParmaError, "key不正确或不存在")
+		request.ErrorRequest(c, request.ParmaError, "uid不正确或不存在")
 		return
 	}
 	if req.Tag == "" || req.Content == "" {
@@ -38,7 +38,7 @@ func Record(ctx context.Context, c *app.RequestContext) {
 
 	d := db.Get()
 	res := d.Create(&recordM.Record{
-		UserID:  user.ID,
+		UserID:  u.ID,
 		Tag:     req.Tag,
 		Content: req.Content,
 		Extend:  req.Extend,
@@ -54,5 +54,5 @@ func Record(ctx context.Context, c *app.RequestContext) {
 
 	c.JSON(consts.StatusOK, resp)
 
-	mislog.DefaultLogger.Infof("Record Success [Name] %s [Tag] %s [Content] %s\n", user.Name, req.Tag, req.Content)
+	mislog.DefaultLogger.Infof("Record Success [Name] %s [Tag] %s [Content] %s\n", u.Name, req.Tag, req.Content)
 }

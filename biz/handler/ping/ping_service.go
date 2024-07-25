@@ -10,6 +10,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 
+	base "github.com/jhue/misgo/biz/model/base"
 	"github.com/jhue/misgo/biz/model/ping"
 )
 
