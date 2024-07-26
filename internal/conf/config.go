@@ -1,15 +1,18 @@
 package conf
 
 import (
-	"fmt"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
-	"gopkg.in/yaml.v2"
-	"os"
-	"reflect"
+	"github.com/jhue/misgo/internal/util"
 	"strings"
+	"sync/atomic"
 )
 
-var conf *Config
+var conf atomic.Value
+
+var paths = []string{
+	"./config.yaml",
+	"./volume/config.yaml",
+}
 
 func InitConfig(v ...string) error {
 	c := initConfig()
@@ -19,10 +22,13 @@ func InitConfig(v ...string) error {
 	} else {
 		c.Version = "test"
 	}
+	err := util.EmptyCheck(c)
+	if err != nil {
+		return err
+	}
 
-	conf = &c
-	if isEmpty(reflect.ValueOf(c)) {
-		return fmt.Errorf("config 存在字段为定义")
+	if GetConfig() != c {
+		conf.Store(&c)
 	}
 	return nil
 }
@@ -77,18 +83,10 @@ func (c LogConfig) HLevel() (level hlog.Level) {
 }
 
 func initConfig() Config {
-	// 读取 YAML 文件
-	data, err := os.ReadFile("./config.yaml")
-	if err != nil {
-		data, err = os.ReadFile("./volume/config.yaml")
-		if err != nil {
-			panic(err)
-		}
-	}
 
 	// 解析 YAML 数据
 	var config Config
-	err = yaml.Unmarshal(data, &config)
+	err := util.ReadYaml(&config, paths...)
 	if err != nil {
 		panic(err)
 	}
@@ -97,25 +95,10 @@ func initConfig() Config {
 }
 
 func GetConfig() Config {
-	return *conf
-}
-
-func isEmpty(v reflect.Value) bool {
-	if !v.IsValid() {
-		return true
-	}
-
-	switch v.Kind() {
-	case reflect.Ptr, reflect.Interface:
-		return v.IsNil()
-	case reflect.Struct:
-		for i := 0; i < v.NumField(); i++ {
-			if isEmpty(v.Field(i)) {
-				return true
-			}
-		}
-		return false
-	default:
-		return reflect.DeepEqual(v.Interface(), reflect.Zero(v.Type()).Interface())
+	c, ok := conf.Load().(*Config)
+	if !ok {
+		return Config{}
+	} else {
+		return *c
 	}
 }

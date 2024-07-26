@@ -5,23 +5,30 @@ package clipboard;
 option go_package = "clipboard";
 
 import "api.proto";
-import "base/empty.proto";
 
 
-message ClipResp {
-  string Message = 1;
-  map<int64,string> Board = 2;
-}
+
 
 message ClipReq{
   string UID = 1[(api.body)="uid"];
   string Content = 2[(api.body)="content"];
 }
 
+message ClipGetReq{
+  string UID = 1[(api.body)="uid"];
+  int64 Start = 2[(api.body)="start"];
+  int64 Count = 3[(api.body)="count"];
+}
+
+message ClipResp {
+  string Message = 1;
+  repeated string Board = 2;
+}
+
 
 service ClipBoardService{
-  rpc ClipBoardGet(base.Empty) returns(ClipResp) {
-    option (api.get) = "api/clipboard";
+  rpc ClipBoardGet(ClipGetReq) returns(ClipResp) {
+    option (api.post) = "api/clipboard";
   }
   rpc ClipBoardPut(ClipReq) returns(ClipResp) {
     option (api.put) = "api/clipboard";

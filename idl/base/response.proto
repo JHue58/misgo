@@ -9,10 +9,12 @@ import "api.proto";
 
 
 
-message ErrorResp {
+message CommonResp {
   int64 Code = 1;
   string Message = 2;
 }
+
+
 
 
 

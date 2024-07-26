@@ -6,4 +6,6 @@ find idl -type f -name "*.proto" ! -path "idl/api.proto" | while read -r proto_f
   hz update -I idl -idl "$proto_file"
 done
 
+rm -rf ./biz/router/base
+
 go mod tidy

@@ -4,23 +4,22 @@ package ping
 
 import (
 	"context"
+	"github.com/jhue/misgo/biz/request"
 	"github.com/jhue/misgo/internal/mislog"
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/cloudwego/hertz/pkg/protocol/consts"
-
-	base "github.com/jhue/misgo/biz/model/base"
 	"github.com/jhue/misgo/biz/model/ping"
 )
 
 // Ping .
 // @router /ping [GET]
 func Ping(ctx context.Context, c *app.RequestContext) {
+	biz := request.NewBizContext(c)
 	resp := &ping.PingResp{
 		Message: "pong",
 		Date:    time.Now().String(),
 	}
-	c.JSON(consts.StatusOK, resp)
+	biz.Response(resp)
 	mislog.DefaultLogger.Info("Ping")
 }
