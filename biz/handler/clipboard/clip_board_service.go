@@ -4,6 +4,7 @@ package clipboard
 
 import (
 	"context"
+	"github.com/bytedance/gopkg/lang/mcache"
 	"github.com/jhue/misgo/biz"
 	"github.com/jhue/misgo/biz/model/base"
 	"github.com/jhue/misgo/biz/request"
@@ -11,7 +12,8 @@ import (
 	clipboardM "github.com/jhue/misgo/db/model/clipboard"
 	"github.com/jhue/misgo/db/model/user"
 	"github.com/jhue/misgo/internal/mislog"
-	"gorm.io/gorm"
+	"github.com/jhue/misgo/internal/util/size"
+	"os"
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -50,9 +52,13 @@ func ClipBoardGet(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := clipboard.ClipResp{Message: "ok", Board: make([]string, 0)}
+	resp := clipboard.ClipResp{Message: "ok", Board: make([]*clipboard.Clip, 0)}
 	for _, v := range b {
-		resp.Board = append(resp.Board, v.Content)
+		resp.Board = append(resp.Board, &clipboard.Clip{
+			Type:    clipboard.ClipType(v.Type),
+			Content: v.Content,
+			Hash:    v.Hash,
+		})
 	}
 	mislog.DefaultLogger.Infof("ClipBoardGet Success [Name] %s [Return Len] %d\n", u.Name, len(resp.Board))
 
@@ -76,60 +82,134 @@ func ClipBoardPut(ctx context.Context, c *app.RequestContext) {
 		bizCtx.ParmaError(base.UIDError)
 		return
 	}
-	if len(req.Content) <= 0 {
+	if req.OneClip == nil {
+		bizCtx.ParmaError(clipboard.ClipEmptyError)
+		return
+	}
+	if len(req.OneClip.Content) <= 0 {
 		bizCtx.ParmaError(clipboard.ContentEmptyError)
 		return
 	}
 
 	d := db.Get()
-	var deleteCount int
-	var boardCount int
-	maxRecords := biz.GetBizConfig().MaxStore
-	err = d.Transaction(func(tx *gorm.DB) error {
 
-		newEntry := clipboardM.ClipBoard{
-			UserID:  u.ID,
-			Content: req.Content,
-			Time:    time.Now(),
-		}
-		// 插入新记录
-		if err := tx.Create(&newEntry).Error; err != nil {
-			return err
-		}
+	config := biz.GetBizConfig().ClipBoardConfig
 
-		// 获取当前用户的记录数量
-		var count int64
-		if err := tx.Model(&newEntry).Where("user_id = ?", u.ID).Count(&count).Error; err != nil {
-			return err
-		}
-
-		// 如果记录数超过最大值，删除最旧的记录
-		if count > maxRecords {
-			var recordsToDelete []clipboardM.ClipBoard
-			// 查询需要删除的记录
-			if err := tx.Where("user_id = ?", u.ID).
-				Order("time ASC").
-				Limit(int(count - maxRecords)).
-				Find(&recordsToDelete).Error; err != nil {
-				return err
-			}
-
-			// 删除记录
-			for _, record := range recordsToDelete {
-				if err := tx.Delete(&record).Error; err != nil {
-					return err
-				}
-				deleteCount++
-			}
-
-		}
-		boardCount = int(count) - deleteCount
-		return nil
-
-	})
+	newEntry := clipboardM.ClipBoard{
+		UserID:  u.ID,
+		Type:    clipboardM.TextType,
+		Content: req.OneClip.Content,
+		Time:    time.Now(),
+	}
+	deleteCount, boardCount, err := newEntry.Store(d, config.FileStorePath, config.MaxStore, nil)
 	if err != nil {
 		bizCtx.DBError(err)
+		return
 	}
 	mislog.DefaultLogger.Infof("ClipBoardPut Success [Name] %s [BoardCount] %d [DeleteCount] %d\n", u.Name, boardCount, deleteCount)
+	bizCtx.Success()
+}
+
+// ClipBoardFileGet .
+// @router api/clipboard/file [POST]
+func ClipBoardFileGet(ctx context.Context, c *app.RequestContext) {
+	bizCtx := request.NewBizContext(c)
+	var err error
+	var req clipboard.ClipReq
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		bizCtx.ParmaError(err)
+		return
+	}
+	u, ok := user.ExtractUser(ctx)
+	if !ok {
+		bizCtx.ParmaError(base.UIDError)
+		return
+	}
+	if req.OneClip == nil {
+		bizCtx.ParmaError(clipboard.ClipEmptyError)
+		return
+	}
+
+	entry := clipboardM.ClipBoard{
+		UserID:  u.ID,
+		Type:    int(req.OneClip.Type),
+		Content: req.OneClip.Content,
+		Hash:    req.OneClip.Hash,
+	}
+
+	path, err := entry.FilePath(biz.GetBizConfig().FileStorePath)
+	if err != nil {
+		bizCtx.ParmaError(err)
+		return
+	}
+	_, err = os.Stat(path)
+	if err != nil {
+		bizCtx.ParmaError(clipboard.FileNameOrHashError)
+		return
+	}
+	c.File(path)
+
+}
+
+// ClipBoardFilePut .
+// @router api/clipboard/file [PUT]
+func ClipBoardFilePut(ctx context.Context, c *app.RequestContext) {
+	config := biz.GetBizConfig()
+	bizCtx := request.NewBizContext(c)
+	var err error
+	var req clipboard.ClipFileReq
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		bizCtx.ParmaError(err)
+		return
+	}
+	u, ok := user.ExtractUser(ctx)
+	if !ok {
+		bizCtx.ParmaError(base.UIDError)
+		return
+	}
+	formFile, err := c.FormFile("file")
+	if err != nil {
+		bizCtx.ParmaError(err)
+		return
+	}
+	if formFile.Size > config.MaxFileSizeMb*size.MiB {
+		bizCtx.ParmaError(clipboard.FileToLargeError)
+		return
+	}
+
+	newEntry := clipboardM.ClipBoard{
+		UserID:  u.ID,
+		Type:    clipboardM.FileType,
+		Content: formFile.Filename,
+		Hash:    req.Hash,
+		Time:    time.Now(),
+	}
+
+	file, err := formFile.Open()
+	if err != nil {
+		bizCtx.ServerError(err)
+		return
+	}
+	p := mcache.Malloc(int(formFile.Size))
+	defer mcache.Free(p)
+	_, err = file.Read(p)
+	if err != nil {
+		bizCtx.ServerError(err)
+		return
+	}
+
+	deleteCount, boardCount, err := newEntry.Store(db.Get(), config.FileStorePath, config.MaxStore, p)
+	if err != nil {
+		bizCtx.DBError(err)
+		return
+	}
+	mislog.DefaultLogger.Infof("ClipBoardFilePut Success [Name] %s [FileName] %s [FileSize] %s [BoardCount] %d [DeleteCount] %d\n",
+		u.Name,
+		formFile.Filename,
+		size.Format(int(formFile.Size)),
+		boardCount,
+		deleteCount)
 	bizCtx.Success()
 }

@@ -20,6 +20,9 @@ func Register(r *server.Hertz) {
 	{
 		_api := root.Group("/api", _apiMw()...)
 		_api.POST("/clipboard", append(_clipboardgetMw(), clipboard.ClipBoardGet)...)
+		_clipboard := _api.Group("/clipboard", _clipboardMw()...)
+		_clipboard.POST("/file", append(_clipboardfilegetMw(), clipboard.ClipBoardFileGet)...)
+		_clipboard.PUT("/file", append(_clipboardfileputMw(), clipboard.ClipBoardFilePut)...)
 		_api.PUT("/clipboard", append(_clipboardputMw(), clipboard.ClipBoardPut)...)
 	}
 }

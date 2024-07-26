@@ -25,3 +25,18 @@ func _clipboardputMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _clipboardMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _clipboardfilegetMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _clipboardfileputMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

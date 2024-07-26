@@ -1,2 +1,4 @@
 clipBoardConfig:
-  maxStore: 10
+  maxStore: 2
+  fileStorePath: ./files/clipboard
+  maxFileSizeMb: 10

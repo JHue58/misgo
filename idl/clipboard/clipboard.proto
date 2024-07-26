@@ -6,12 +6,26 @@ option go_package = "clipboard";
 
 import "api.proto";
 
+enum ClipType {
+  TEXT_TYPE = 0;
+  FILE_TYPE = 1;
+}
 
-
+message Clip {
+  ClipType Type = 1[(api.body)="type"];
+  string Content = 2[(api.body)="content"];
+  string Hash = 3[(api.body)="hash"];;
+}
 
 message ClipReq{
   string UID = 1[(api.body)="uid"];
-  string Content = 2[(api.body)="content"];
+  Clip OneClip = 2[(api.body)="clip"];
+}
+
+message ClipFileReq{
+  string UID = 1[(api.form)="uid"];
+  string Content = 2[(api.form)="content"];
+  string Hash = 3[(api.form)="hash"];;
 }
 
 message ClipGetReq{
@@ -22,8 +36,10 @@ message ClipGetReq{
 
 message ClipResp {
   string Message = 1;
-  repeated string Board = 2;
+  repeated Clip Board = 2;
 }
+
+
 
 
 service ClipBoardService{
@@ -33,4 +49,14 @@ service ClipBoardService{
   rpc ClipBoardPut(ClipReq) returns(ClipResp) {
     option (api.put) = "api/clipboard";
   }
+
+  rpc ClipBoardFileGet(ClipReq) returns(ClipResp) {
+    option (api.post) = "api/clipboard/file";
+  }
+
+  rpc ClipBoardFilePut(ClipFileReq) returns(ClipResp) {
+    option (api.put) = "api/clipboard/file";
+  }
+
+
 }

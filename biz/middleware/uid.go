@@ -12,7 +12,7 @@ import (
 var emptyUID = uid{}
 
 type uid struct {
-	UID string `json:"uid"`
+	UID string `json:"uid" form:"uid"`
 }
 
 func (u uid) IsEmpty() bool {

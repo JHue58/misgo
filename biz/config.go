@@ -17,7 +17,9 @@ type Config struct {
 }
 
 type ClipBoardConfig struct {
-	MaxStore int64 `yaml:"maxStore"`
+	MaxStore      int64  `yaml:"maxStore"`
+	FileStorePath string `yaml:"fileStorePath"`
+	MaxFileSizeMb int64  `yaml:"maxFileSizeMb"`
 }
 
 func InitBizConfig() error {
