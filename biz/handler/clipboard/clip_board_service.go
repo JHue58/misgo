@@ -36,14 +36,14 @@ func ClipBoardGet(ctx context.Context, c *app.RequestContext) {
 		bizCtx.ParmaError(base.UIDError)
 		return
 	}
-	var length int64
-	maxRecords := biz.GetBizConfig().MaxStore
+	config := biz.GetBizConfig()
+
 	d := db.Get()
-	if req.Count > maxRecords {
-		length = maxRecords
-	} else {
-		length = req.Count
+	length := req.Count
+	if length > config.MaxStore {
+		length = config.MaxStore
 	}
+
 	b := make([]clipboardM.ClipBoard, 0, length)
 
 	res := d.Where("user_id = ?", u.ID).Order("time desc").Offset(int(req.Start)).Limit(int(req.Count)).Find(&b)

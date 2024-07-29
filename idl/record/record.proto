@@ -20,9 +20,31 @@ message RecordResp {
   string Content = 1;
 }
 
+message RecordGetReq {
+  string UID = 1[(api.body)="uid"];
+  string Tag = 2[(api.body)="tag"];
+  int64 Start = 3[(api.body)="start"];
+  int64 Count = 4[(api.body)="count"];
+}
+
+message Record {
+  string Tag = 1 [(api.body)="tag"];
+  string Content = 2 [(api.body)="content"];
+  string Extend = 3 [(api.body)="extend"];
+  int64 Time = 4 [(api.body)="time"];
+}
+
+message RecordGetResp{
+  repeated Record Records = 1;
+}
+
 
 service RecordService{
   rpc Record(RecordReq) returns(RecordResp) {
     option (api.put) = "api/record";
   }
+  rpc RecordGet(RecordGetReq) returns(RecordGetResp) {
+    option (api.post) = "api/record";
+  }
+
 }

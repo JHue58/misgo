@@ -2,3 +2,6 @@ clipBoardConfig:
   maxStore: 2
   fileStorePath: ./files/clipboard
   maxFileSizeMb: 10
+
+recordConfig:
+  maxGetCount: 2

@@ -20,3 +20,8 @@ func _apiMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _recordgetMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

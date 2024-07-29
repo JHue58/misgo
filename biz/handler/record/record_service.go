@@ -4,6 +4,7 @@ package record
 
 import (
 	"context"
+	"github.com/jhue/misgo/biz"
 	"github.com/jhue/misgo/biz/model/base"
 	"github.com/jhue/misgo/biz/request"
 	"github.com/jhue/misgo/db"
@@ -52,4 +53,52 @@ func Record(ctx context.Context, c *app.RequestContext) {
 	}
 	biz.Success()
 	mislog.DefaultLogger.Infof("Record Success [Name] %s [Tag] %s [Content] %s\n", u.Name, req.Tag, req.Content)
+}
+
+// RecordGet .
+// @router api/record [POST]
+func RecordGet(ctx context.Context, c *app.RequestContext) {
+	bizCtx := request.NewBizContext(c)
+	var err error
+	var req record.RecordGetReq
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		bizCtx.ParmaError(err)
+		return
+	}
+
+	u, ok := user.ExtractUser(ctx)
+	if !ok {
+		bizCtx.ParmaError(base.UIDError)
+		return
+	}
+	config := biz.GetBizConfig()
+	length := req.Count
+	if length > config.MaxGetCount {
+		length = config.MaxGetCount
+	}
+
+	b := make([]recordM.Record, 0, length)
+	d := db.Get()
+	res := d.Where("user_id = ? AND tag LIKE ?", u.ID, "%"+req.Tag+"%").
+		Order("time desc").
+		Offset(int(req.Start)).
+		Limit(int(length)).
+		Find(&b)
+	if res.Error != nil {
+		bizCtx.DBError(res.Error)
+		return
+	}
+
+	resp := record.RecordGetResp{Records: make([]*record.Record, 0)}
+	for _, v := range b {
+		resp.Records = append(resp.Records, &record.Record{
+			Tag:     v.Tag,
+			Content: v.Content,
+			Extend:  v.Extend,
+			Time:    v.Time.UnixNano(),
+		})
+	}
+	bizCtx.Response(&resp)
+
 }

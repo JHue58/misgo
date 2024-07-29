@@ -14,12 +14,17 @@ var paths = []string{
 
 type Config struct {
 	ClipBoardConfig `yaml:"clipBoardConfig"`
+	RecordConfig    `yaml:"recordConfig"`
 }
 
 type ClipBoardConfig struct {
 	MaxStore      int64  `yaml:"maxStore"`
 	FileStorePath string `yaml:"fileStorePath"`
 	MaxFileSizeMb int64  `yaml:"maxFileSizeMb"`
+}
+
+type RecordConfig struct {
+	MaxGetCount int64 `yaml:"maxGetCount"`
 }
 
 func InitBizConfig() error {
