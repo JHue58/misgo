@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package money;
+
+option go_package = "money";
+
+import "api.proto";
+
+
+
+message Transaction {
+  string Type = 1[(api.body)="type"];
+  string Category = 2 [(api.body)="category"];
+  float Amount = 3[(api.body)="amount"];
+  string Note = 4[(api.body)="note"];
+  int64 Time = 5[(api.body)="time"];
+}
+
+message TransactionReq {
+  string UID = 1[(api.body)="uid"];
+  Transaction OneTransaction = 2[(api.body)="transaction"];
+}
+
+
+
+
+message TransactionGetReq {
+  string UID = 1[(api.body)="uid"];
+  int64 Start = 2[(api.body)="start"];
+  int64 Count = 3[(api.body)="count"];
+
+  // 在TimeRange非自定义时，此处不生效
+  int64 StartTime = 4 [(api.body) = "start_time"];
+  int64 EndTime = 5 [(api.body) = "end_time"];
+
+  // 今天,昨天,这周,上周,这个月,上个月,自定义
+  string TimeRange = 6 [(api.body) = "time_range"];
+
+  // where的判断表达式
+  string Condition = 7 [(api.body) = "condition"];
+
+  // order表达式
+  string Order = 8 [(api.body) = "order"];
+
+}
+
+message TransactionResp {
+  // this count is timeRange count.
+  int64 Count = 1;
+  string ReportMD = 2;
+  repeated Transaction Transactions = 3;
+}
+
+
+
+
+
+
+service MoneyService{
+  rpc TransactionPut(TransactionReq) returns(TransactionResp) {
+    option (api.put) = "api/money";
+  }
+  rpc TransactionGet(TransactionGetReq) returns(TransactionResp) {
+    option (api.post) = "api/money";
+  }
+}

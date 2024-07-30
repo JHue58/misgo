@@ -15,6 +15,7 @@ var paths = []string{
 type Config struct {
 	ClipBoardConfig `yaml:"clipBoardConfig"`
 	RecordConfig    `yaml:"recordConfig"`
+	MoneyConfig     `yaml:"moneyConfig"`
 }
 
 type ClipBoardConfig struct {
@@ -24,6 +25,10 @@ type ClipBoardConfig struct {
 }
 
 type RecordConfig struct {
+	MaxGetCount int64 `yaml:"maxGetCount"`
+}
+
+type MoneyConfig struct {
 	MaxGetCount int64 `yaml:"maxGetCount"`
 }
 

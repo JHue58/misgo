@@ -5,3 +5,6 @@ clipBoardConfig:
 
 recordConfig:
   maxGetCount: 2
+
+moneyConfig:
+  maxGetCount: 10

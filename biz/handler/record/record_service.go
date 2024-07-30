@@ -72,7 +72,7 @@ func RecordGet(ctx context.Context, c *app.RequestContext) {
 		bizCtx.ParmaError(base.UIDError)
 		return
 	}
-	config := biz.GetBizConfig()
+	config := biz.GetBizConfig().RecordConfig
 	length := req.Count
 	if length > config.MaxGetCount {
 		length = config.MaxGetCount
@@ -96,9 +96,10 @@ func RecordGet(ctx context.Context, c *app.RequestContext) {
 			Tag:     v.Tag,
 			Content: v.Content,
 			Extend:  v.Extend,
-			Time:    v.Time.UnixNano(),
+			Time:    v.Time.Unix(),
 		})
 	}
 	bizCtx.Response(&resp)
 
+	mislog.DefaultLogger.Infof("RecordGet Success [Name] %s [Tag] %s [Returns] %d\n", u.Name, req.Tag, len(resp.Records))
 }
