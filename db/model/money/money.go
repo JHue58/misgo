@@ -30,6 +30,6 @@ func (t *Transaction) String() string {
 //	|日期|类型（支出/收入）|用途/来源|金额|备注|
 func (t *Transaction) Markdown() string {
 	formatTime := t.Time.Format("2006-01-02 15:04:05")
-	return fmt.Sprintf("| %s | %s | %s | %.2f | %s |\n",
+	return fmt.Sprintf("| %s | %s | %s | %.2f | %s | \n",
 		formatTime, t.Type, t.Category, t.Amount, t.Note)
 }

@@ -14,6 +14,7 @@ import (
 	moneyM "github.com/jhue/misgo/db/model/money"
 	"github.com/jhue/misgo/db/model/user"
 	"github.com/jhue/misgo/internal/mislog"
+	"github.com/jhue/misgo/internal/util"
 	"strings"
 	"time"
 )
@@ -112,24 +113,31 @@ func TransactionGet(ctx context.Context, c *app.RequestContext) {
 		bizCtx.SuccessWithMsg("finished")
 		return
 	}
-	mdTitle := fmt.Sprintf("### %s\n#### 总共有`%d`笔交易,最大笔的交易为\n`%s` \n", dateFormat, count, maxTransaction.String())
-
+	mdTitle := fmt.Sprintf("# %s\n## 总共有 `%d` 笔交易,最大笔的交易为\n`%s`\n", dateFormat, count, maxTransaction.String())
+	md, err := ToReportMarkDown(mdTitle, b)
+	if err != nil {
+		bizCtx.ServerError(err)
+		return
+	}
 	resp := money.TransactionResp{
 		Count:        count,
-		ReportMD:     ToReportMarkDown(mdTitle, b),
+		ReportMD:     md,
 		Transactions: nil,
 	}
 	bizCtx.Response(&resp)
 	mislog.DefaultLogger.Infof("MoneyGet Success [Name] %s [Returns] %d\n", u.Name, len(b))
 }
 
-func ToReportMarkDown(title string, b []*moneyM.Transaction) string {
+func ToReportMarkDown(title string, b []*moneyM.Transaction) (string, error) {
+
 	builder := strings.Builder{}
 	builder.WriteString(title)
-	builder.WriteString("|日期|类型|用途/来源|金额|备注| \n |-------|-------|-------|-------|-------|\n")
+	builder.WriteString("|日期|类型|用途/来源|金额|备注|\n|-|-|-|-|-|\n")
 	for _, transaction := range b {
 		builder.WriteString(transaction.Markdown())
 	}
-	return builder.String()
 
+	h, err := util.ToMarkDownHtml(builder.String())
+	fmt.Println(h)
+	return h, err
 }
