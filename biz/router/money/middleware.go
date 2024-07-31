@@ -25,3 +25,13 @@ func _transactiongetMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _moneyMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _transactiongetviewMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

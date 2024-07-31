@@ -16,6 +16,23 @@ message Transaction {
   int64 Time = 5[(api.body)="time"];
 }
 
+message TransactionView {
+  // 总共
+  int64 Count = 1 ;
+  // 收入Count
+  int64 IncomeCount = 2;
+  // 支出Count
+  int64 ExpenditureCount = 3;
+  // 总收入
+  float Income = 4;
+  // 总支出
+  float Expenditure = 5;
+  // 最大收入
+  Transaction LargestIncome = 6;
+  // 最大支出
+  Transaction LargestExpenditure = 7;
+}
+
 message TransactionReq {
   string UID = 1[(api.body)="uid"];
   Transaction OneTransaction = 2[(api.body)="transaction"];
@@ -45,11 +62,9 @@ message TransactionGetReq {
 }
 
 message TransactionResp {
-  // this count is timeRange count.
-  int64 Count = 1;
-  string ReportMD = 2;
-  repeated Transaction Transactions = 3;
+  repeated Transaction Transactions = 1;
 }
+
 
 
 
@@ -62,5 +77,8 @@ service MoneyService{
   }
   rpc TransactionGet(TransactionGetReq) returns(TransactionResp) {
     option (api.post) = "api/money";
+  }
+  rpc TransactionGetView(TransactionGetReq) returns(TransactionView) {
+    option (api.post) = "api/money/view";
   }
 }

@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "user";
+
+import "api.proto";
+
+
+
+
+message UserGetReq {
+  string UID = 1[(api.body)="uid"];
+}
+
+message UserInfo {
+  string UID = 1;
+  string Name = 2;
+}
+
+
+service UserService{
+  rpc UserGet(UserGetReq) returns(UserInfo) {
+    option (api.get) = "api/user";
+  }
+
+
+}

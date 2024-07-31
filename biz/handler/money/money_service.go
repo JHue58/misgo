@@ -19,6 +19,16 @@ import (
 	"time"
 )
 
+func TransactionSearch(ctx context.Context, c *app.RequestContext) {
+	bizCtx := request.NewBizContext(c)
+	_, ok := user.ExtractUser(ctx)
+	if !ok {
+		bizCtx.ParmaError(base.UIDError)
+		return
+	}
+	c.HTML(200, "money.html", nil)
+}
+
 // TransactionPut .
 // @router api/money [PUT]
 func TransactionPut(ctx context.Context, c *app.RequestContext) {
@@ -83,7 +93,7 @@ func TransactionGet(ctx context.Context, c *app.RequestContext) {
 	if req.Count > config.MaxGetCount {
 		req.Count = config.MaxGetCount
 	}
-	startDate, endDate, dateFormat := req.GetDateRange()
+	startDate, endDate, _ := req.GetDateRange()
 	if startDate.After(endDate) {
 		bizCtx.ParmaError(money.ErrStartTimeBeforeEndTime)
 		return
@@ -91,41 +101,138 @@ func TransactionGet(ctx context.Context, c *app.RequestContext) {
 	b := make([]*moneyM.Transaction, 0, req.Count)
 	var query string
 	if req.Condition != "" {
-		query = fmt.Sprintf("user_id = ? AND %s AND (time >= ? AND time <= ?)", req.Condition)
+		query = fmt.Sprintf("user_id = ?  AND (time >= ? AND time <= ?) AND %s", req.Condition)
 	} else {
 		query = fmt.Sprintf("user_id = ? AND (time >= ? AND time <= ?)")
 	}
 
-	var count int64
-	var maxTransaction moneyM.Transaction
-	res := d.Model(&maxTransaction).Where(query, u.ID, startDate, endDate).Order("amount desc").Count(&count).Limit(1).Find(&maxTransaction)
+	res := d.Where(query, u.ID, startDate, endDate).Order(req.Order).Offset(int(req.Start)).Limit(int(req.Count)).Find(&b)
 	if res.Error != nil {
 		bizCtx.DBError(res.Error)
 		return
 	}
 
-	res = d.Where(query, u.ID, startDate, endDate).Order(req.Order).Offset(int(req.Start)).Limit(int(req.Count)).Find(&b)
+	resp := money.TransactionResp{
+		Transactions: make([]*money.Transaction, 0, len(b)),
+	}
+
+	for _, transaction := range b {
+		resp.Transactions = append(resp.Transactions, &money.Transaction{
+			Type:     transaction.Type,
+			Category: transaction.Category,
+			Amount:   float32(transaction.Amount),
+			Note:     transaction.Note,
+			Time:     transaction.Time.Unix(),
+		})
+	}
+
+	bizCtx.Response(&resp)
+	mislog.DefaultLogger.Infof("MoneyGet Success [Name] %s [Returns] %d\n", u.Name, len(b))
+}
+
+// TransactionGetView .
+// @router api/money/view [POST]
+func TransactionGetView(ctx context.Context, c *app.RequestContext) {
+	bizCtx := request.NewBizContext(c)
+	var err error
+	var req money.TransactionGetReq
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		bizCtx.ParmaError(err)
+		return
+	}
+	u, ok := user.ExtractUser(ctx)
+	if !ok {
+		bizCtx.ParmaError(base.UIDError)
+		return
+	}
+	config := biz.GetBizConfig().MoneyConfig
+
+	d := db.Get()
+	if req.Count > config.MaxGetCount {
+		req.Count = config.MaxGetCount
+	}
+	startDate, endDate, _ := req.GetDateRange()
+	if startDate.After(endDate) {
+		bizCtx.ParmaError(money.ErrStartTimeBeforeEndTime)
+		return
+	}
+
+	var query string
+	if req.Condition != "" {
+		query = fmt.Sprintf("user_id = ? AND (time >= ? AND time <= ?) AND type=? AND %s ", req.Condition)
+	} else {
+		query = fmt.Sprintf("user_id = ? AND (time >= ? AND time <= ?) AND type=?")
+	}
+
+	var incomeCount, expenditureCount int64
+	var largestIncome, largestExpenditure moneyM.Transaction
+	res := d.Model(&largestIncome).Where(query, u.ID, startDate, endDate, "收入").Order("amount desc").Count(&incomeCount)
 	if res.Error != nil {
 		bizCtx.DBError(res.Error)
 		return
 	}
-	if len(b) == 0 && count > 0 {
-		bizCtx.SuccessWithMsg("finished")
+	if incomeCount > 0 {
+		if err := res.Take(&largestIncome).Error; err != nil {
+			bizCtx.DBError(err)
+			return
+		}
+	}
+	res = d.Model(&largestExpenditure).Where(query, u.ID, startDate, endDate, "支出").Order("amount desc").Count(&expenditureCount)
+	if res.Error != nil {
+		bizCtx.DBError(res.Error)
 		return
 	}
-	mdTitle := fmt.Sprintf("# %s\n## 总共有 `%d` 笔交易,最大笔的交易为\n`%s`\n", dateFormat, count, maxTransaction.String())
-	md, err := ToReportMarkDown(mdTitle, b)
-	if err != nil {
-		bizCtx.ServerError(err)
-		return
+	if expenditureCount > 0 {
+		if err := res.Take(&largestExpenditure).Error; err != nil {
+			bizCtx.DBError(err)
+			return
+		}
 	}
-	resp := money.TransactionResp{
-		Count:        count,
-		ReportMD:     md,
-		Transactions: nil,
+	var totalIncome, totalExpenditure float64
+
+	if incomeCount > 0 {
+		if err := d.Model(&moneyM.Transaction{}).Select("SUM(amount)").Where(query, u.ID, startDate, endDate, "收入").Scan(&totalIncome).Error; err != nil {
+			bizCtx.DBError(err)
+			return
+		}
 	}
+	if expenditureCount > 0 {
+		if err := d.Model(&moneyM.Transaction{}).Select("SUM(amount)").Where(query, u.ID, startDate, endDate, "支出").Scan(&totalExpenditure).Error; err != nil {
+			bizCtx.DBError(err)
+			return
+		}
+	}
+
+	resp := money.TransactionView{
+		Count:            incomeCount + expenditureCount,
+		IncomeCount:      incomeCount,
+		ExpenditureCount: expenditureCount,
+		Income:           float32(totalIncome),
+		Expenditure:      float32(totalExpenditure),
+	}
+	if incomeCount > 0 {
+		resp.LargestIncome = &money.Transaction{
+			Type:     largestIncome.Type,
+			Category: largestIncome.Category,
+			Amount:   float32(largestIncome.Amount),
+			Note:     largestIncome.Note,
+			Time:     largestIncome.Time.Unix(),
+		}
+	}
+
+	if expenditureCount > 0 {
+		resp.LargestExpenditure = &money.Transaction{
+			Type:     largestExpenditure.Type,
+			Category: largestExpenditure.Category,
+			Amount:   float32(largestExpenditure.Amount),
+			Note:     largestExpenditure.Note,
+			Time:     largestExpenditure.Time.Unix(),
+		}
+	}
+
 	bizCtx.Response(&resp)
-	mislog.DefaultLogger.Infof("MoneyGet Success [Name] %s [Returns] %d\n", u.Name, len(b))
+	mislog.DefaultLogger.Infof("MoneyGetView Success [Name] %s \n", u.Name)
 }
 
 func ToReportMarkDown(title string, b []*moneyM.Transaction) (string, error) {

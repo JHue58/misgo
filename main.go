@@ -3,7 +3,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/jhue/misgo/biz"
 	"github.com/jhue/misgo/biz/middleware"
@@ -35,6 +37,11 @@ func main() {
 		server.WithHostPorts(fmt.Sprintf("%s:%d", config.Host, config.Port)),
 		server.WithMaxRequestBodySize(15*size.MiB),
 	)
+	h.LoadHTMLGlob("templates/*")
+	h.Static("/static", "./")
+	h.NoRoute(func(c context.Context, ctx *app.RequestContext) {
+		ctx.HTML(200, "404.html", nil)
+	})
 	h.Use(middleware.UIDExtractMiddleware())
 	register(h)
 	h.Spin()

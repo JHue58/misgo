@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+  <meta charset="UTF-8">
+  <title>Misgo记账</title>
+  <link rel="stylesheet" href="/static/tabler/css/tabler.css">
+  <link rel="stylesheet" href="/static/tabler/css/tabler-flags.css">
+  <link rel="stylesheet" href="/static/tabler/css/tabler-payments.css">
+  <link rel="stylesheet" href="/static/tabler/css/tabler-vendors.css">
+  <link rel="icon" href="/static/my/ico.ico" type="image/x-icon">
+  <script src="/static/apexcharts/js/apexcharts.js"></script>
+  <script src="/static/tabler/js/tabler.js"></script>
+  <script src="/static/my/js/limit_table.js"></script>
+  <script src="/static/my/js/utils.js"></script>
+  <script src="/static/my/js/money/money_init.js" defer></script>
+  <script src="/static/my/js/onclickEvent.js"></script>
+</head>
+<body>
+<div class="page">
+  <header class="navbar navbar-expand-sm navbar-light d-print-none">
+    <div class="container-xl">
+      <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
+        Misgo
+      </h1>
+      <div class="navbar-nav flex-row order-md-last">
+        <div class="nav-item">
+          <a href="#" class="nav-link d-flex lh-1 text-reset p-0">
+            <span class="avatar avatar-sm" style="background-image: url(/static/my/ico.ico)"></span>
+            <div class="d-none d-xl-block ps-2">
+              <div>JHue</div>
+              <div class="mt-1 small text-muted">Designer</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div class="page-wrapper">
+    <div class="page-body">
+      <div id="response-page" class="container-xl">
+        <div class="col-12">
+          <div class="card-lg">
+            <div class="card-body" style="height: 10rem">
+              <div class="text-center">
+                <h1 id="user-name"><div class="placeholder col-1"></div></h1>
+<!--                <h5 id="user-win-ratio">胜率：null</h5>-->
+<!--                <div id="score-title"><span class="badge bg-lime">初心</span></div>-->
+                <button onclick="transaction_default()" type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#transaction-search-modal">
+                  <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
+                  查询
+                </button>
+                <div class="modal" id="transaction-search-callback-modal" tabindex="-1">
+                  <!--此处由JS添加-->
+                </div>
+                <div class="modal" id="transaction-search-modal" tabindex="-1">
+                  <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title">账单查询</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label class="form-label">UID</label>
+                          <input type="text" class="form-control" name="uid" id="uid-input" placeholder="你的UID" readonly/>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">时间范围</label>
+                          <select class="form-select" name="time_range" id="time-range">
+                            <option value="今天">今天</option>
+                            <option value="昨天">昨天</option>
+                            <option value="这周">这周</option>
+                            <option value="上周">上周</option>
+                            <option value="这个月">这个月</option>
+                            <option value="上个月">上个月</option>
+                            <option value="自定义">自定义</option>
+                          </select>
+                        </div>
+                        <div id="time-select" >
+                        <div class="mb-3">
+                          <label class="form-label">开始时间</label>
+                          <input type="date" class="form-control" name="start_time" />
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label">结束时间</label>
+                          <input type="date" class="form-control" name="end_time"  />
+                        </div>
+                        </div>
+
+                        <div id="query-div">
+
+                          <div class="mb-3">
+                            <div class="alert alert-info m-0">
+                              <span>使用SQL语句来完成高级查询与排序(下面是对应的SQL字段)</span>
+                              <br>
+                              <span>日期=time, 金额=amount, 类型=type(支出或收入), 来源/用途=category, 备注=note</span>
+                            </div>
+                          </div>
+                          <div class="mb-3">
+                            <label class="form-label">查询条件</label>
+                            <input type="text" class="form-control" name="condition" id="condition" placeholder="SQL Where语句" />
+                          </div>
+                          <div class="mb-3">
+                            <label class="form-label">排序条件</label>
+                            <input type="text" class="form-control" name="order" id="order" value="time desc" placeholder="SQL Order语句" />
+                          </div>
+
+                          <div class="mb-3"></div>
+                        </div>
+                        <div class="mb-3">
+                          <div class="form-selectgroup">
+                            <label class="form-selectgroup-item">
+                              <input type="radio" name="query" value="simple" class="form-selectgroup-input" checked />
+                              <span class="form-selectgroup-label">
+                                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-device-ipad-horizontal-star">
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                  <path d="M10.5 20h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v5.5" />
+                                  <path d="M9 17h1" />
+                                  <path d="M17.8 20.817l-2.172 1.138a.392 .392 0 0 1 -.568 -.41l.415 -2.411l-1.757 -1.707a.389 .389 0 0 1 .217 -.665l2.428 -.352l1.086 -2.193a.392 .392 0 0 1 .702 0l1.086 2.193l2.428 .352a.39 .39 0 0 1 .217 .665l-1.757 1.707l.414 2.41a.39 .39 0 0 1 -.567 .411l-2.172 -1.138z" />
+                                </svg>
+
+                                普通查询
+                              </span>
+                            </label>
+                            <label class="form-selectgroup-item">
+                              <input type="radio" name="query" value="advanced" class="form-selectgroup-input" />
+                              <span class="form-selectgroup-label">
+                                <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-mysql">
+                                  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                  <path d="M13 21c-1.427 -1.026 -3.59 -3.854 -4 -6c-.486 .77 -1.501 2 -2 2c-1.499 -.888 -.574 -3.973 0 -6c-1.596 -1.433 -2.468 -2.458 -2.5 -4c-3.35 -3.44 -.444 -5.27 2.5 -3h1c8.482 .5 6.421 8.07 9 11.5c2.295 .522 3.665 2.254 5 3.5c-2.086 -.2 -2.784 -.344 -3.5 0c.478 1.64 2.123 2.2 3.5 3" />
+                                  <path d="M9 7h.01" />
+                                </svg>
+
+                                高级查询
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+
+                      </div>
+
+                      <div class="modal-footer">
+                        <a href="#" class="btn btn-link link-secondary" data-bs-dismiss="modal">
+                          取消
+                        </a>
+                        <button  onclick="transaction_search()" type="button" class="btn btn-primary"  data-bs-toggle="modal" data-bs-target="#transaction-search-callback-modal">
+                          查询
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card-lg"><div class="card-body"></div> </div>
+        </div>
+        <div class="col-12" id="view-card">
+          <div class="card card-lg">
+            <div class="card-body" style="height: auto">
+              <div class="card-title">
+                <div class="card-title">
+                  <div class="text-center"><h3 id="view-title">总览</h3></div>
+                  <div class="hr-text" id="view-title-condition"></div>
+                </div>
+              </div>
+              <div class="datagrid">
+                <div class="datagrid-item">
+                  <div class="datagrid-title">总笔数</div>
+                  <div id="count-view" class="datagrid-content">2000</div>
+                </div>
+                <div class="datagrid-item">
+                  <div class="datagrid-title">收入笔数</div>
+                  <div id="income-count-view" class="datagrid-content">1000</div>
+                </div>
+                <div class="datagrid-item">
+                  <div class="datagrid-title">支出笔数</div>
+                  <div id="expenditure-count-view" class="datagrid-content">1000</div>
+                </div>
+                <div class="datagrid-item">
+                  <div class="datagrid-title">总收入</div>
+                  <div class="datagrid-content">
+                    <span id="income-view" class="status status-red">
+                      +100
+                    </span>
+                  </div>
+                </div>
+                <div class="datagrid-item">
+                  <div class="datagrid-title">总支出</div>
+                  <div class="datagrid-content">
+                    <span id="expenditure-view" class="status status-green">
+                      -100
+                    </span>
+                  </div>
+                </div>
+                <div class="datagrid-item">
+                  <div class="datagrid-title">最大一笔收入</div>
+                  <div  class="datagrid-content">
+                    <span id="largest-income-view" class="status status-red">
+                      2024年7月31日 工资 收入 100
+                    </span>
+                  </div>
+                </div>
+                <div class="datagrid-item">
+                  <div class="datagrid-title">最大一笔支出</div>
+                  <div class="datagrid-content">
+                    <span id="largest-expenditure-view" class="status status-green">
+                      2024年7月31日 餐饮 支出 100
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+
+        <div class="col-12">
+          <div class="card-lg"><div class="card-body"></div> </div>
+        </div>
+        <div class="col-12" id="bill-card">
+          <div class="card">
+            <div class="card-body" style="height: auto">
+              <div class="card-title">
+                <div class="card-title">
+                  <div class="text-center"><h3 id="bill-title">账单</h3></div>
+                  <div class="hr-text" id="bill-title-condition"></div>
+                </div>
+              </div>
+              <div id="bill-limit-table" class="table-responsive">
+                <table id="bill-table" class="table table-vcenter">
+                  <thead>
+                  <tr>
+                    <th>日期</th>
+                    <th>类型</th>
+                    <th>来源/用途</th>
+                    <th>金额</th>
+                    <th>备注</th>
+                  </tr>
+                  </thead>
+
+                  <tbody id="bill-tbody">
+
+                  </tbody>
+
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card-lg"><div class="card-body"></div> </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<footer class="footer">
+  <div class="text-center">
+    JHue
+    <a href="https://github.com/jhue58" target="_blank">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+        <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+      </svg>
+    </a>
+  </div>
+  <div class="text-center">threeax@foxmail.com</div>
+  <div class="text-center">粤ICP备2023041754号</div>
+</footer>
+</body>
+
+
+</html>
+

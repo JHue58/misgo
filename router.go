@@ -4,10 +4,12 @@ package main
 
 import (
 	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/jhue/misgo/biz/handler/money"
 )
 
 // customizeRegister registers customize routers.
 func customizedRegister(r *server.Hertz) {
+	r.GET("/money", money.TransactionSearch)
 	//r.GET("/ping", handler.Ping)
 
 	// your code ...

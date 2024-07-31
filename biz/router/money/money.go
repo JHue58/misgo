@@ -20,6 +20,8 @@ func Register(r *server.Hertz) {
 	{
 		_api := root.Group("/api", _apiMw()...)
 		_api.PUT("/money", append(_transactionputMw(), money.TransactionPut)...)
+		_money := _api.Group("/money", _moneyMw()...)
+		_money.POST("/view", append(_transactiongetviewMw(), money.TransactionGetView)...)
 		_api.POST("/money", append(_transactiongetMw(), money.TransactionGet)...)
 	}
 }
