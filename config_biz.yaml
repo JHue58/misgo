@@ -12,3 +12,5 @@ moneyConfig:
     separators: [",", "，", "。","；",";", "\n"]
     expenseKeywords: ["用了", "花了", "支出","开销","花费"]
     incomeKeywords: ["收入", "得到","获得"]
+    todayKeywords: ["今天", "今日", "刚刚", "刚才", "现在"]
+    yesterdayKeywords: ["昨天", "昨日", "前一天"]

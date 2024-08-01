@@ -41,6 +41,12 @@ func (c Config) Equal(target Config) (equal bool) {
 	if !slices.Equal(srcParse.IncomeKeywords, dstParse.IncomeKeywords) {
 		return false
 	}
+	if !slices.Equal(srcParse.TodayKeywords, dstParse.TodayKeywords) {
+		return false
+	}
+	if !slices.Equal(srcParse.YesterdayKeywords, dstParse.YesterdayKeywords) {
+		return false
+	}
 	return true
 
 }
@@ -61,9 +67,11 @@ type MoneyConfig struct {
 }
 
 type ParserConfig struct {
-	Separators      []string `yaml:"separators"`
-	ExpenseKeywords []string `yaml:"expenseKeywords"`
-	IncomeKeywords  []string `yaml:"incomeKeywords"`
+	Separators        []string `yaml:"separators"`
+	ExpenseKeywords   []string `yaml:"expenseKeywords"`
+	IncomeKeywords    []string `yaml:"incomeKeywords"`
+	TodayKeywords     []string `yaml:"todayKeywords"`
+	YesterdayKeywords []string `yaml:"yesterdayKeywords"`
 }
 
 func InitBizConfig() error {

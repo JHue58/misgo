@@ -5,12 +5,18 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 //var (
 //	separators      = []string{",", "，", "。", "\n"}
 //	expenseKeywords = []string{"用了", "花了", "支出","开销"}
 //	incomeKeywords  = []string{"收入", "得到"}
+//)
+
+//var (
+//	today     = []string{"今天", "刚刚", "刚才", "现在"}
+//	yesterday = []string{"昨天", "前一天", "昨日"}
 //)
 
 type TransactionParser struct {
@@ -82,12 +88,29 @@ func (p *TransactionParser) parseOne(part string) (transaction *Transaction) {
 	}
 	transaction.Type = transactionType
 
-	// ③ 移除已解析的内容
+	// ③ 查找时间
+	now := time.Now()
+	date := now
+	for _, keyword := range config.TodayKeywords {
+		if strings.Contains(part, keyword) {
+			part = strings.Replace(part, keyword, "", -1)
+		}
+	}
+
+	for _, keyword := range config.YesterdayKeywords {
+		if strings.Contains(part, keyword) {
+			part = strings.Replace(part, keyword, "", -1)
+			date = time.Date(now.Year(), now.Month(), now.Day()-1, 0, 0, 0, 0, now.Location())
+		}
+	}
+	transaction.Time = date.Unix()
+
+	// ④ 移除已解析的内容
 	part = p.amountRe.ReplaceAllString(part, "")
 	part = strings.Replace(part, transactionType, "", -1)
 	part = strings.TrimSpace(part)
 
-	// ④ 处理剩余的字符串
+	// ⑤ 处理剩余的字符串
 	category := part
 	if len(strings.Split(part, " ")) > 1 {
 		category = strings.Split(part, " ")[0]
