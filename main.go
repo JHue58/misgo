@@ -27,7 +27,7 @@ func main() {
 
 	config := conf.GetConfig()
 
-	f, err := mislog.LogFileIO(config.LogPath)
+	f, err := mislog.LogFileIO(config.LogPath, config.Version)
 	if err != nil {
 		panic(err)
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 func TestLog(t *testing.T) {
-	i, err := LogFileIO(".")
+	i, err := LogFileIO(".", "v0.0.0")
 	assert.NoError(t, err)
 	InitLogger(i, conf.LogConfig{Level: "debug"})
 
