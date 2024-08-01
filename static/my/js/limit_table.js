@@ -117,5 +117,9 @@ class LimitTables {
         this.update_btm(this.table_update_func(this.limit,this.offset));
     }
 
+    update_page(){
+        this.update_btm(this.table_update_func(this.limit,this.offset));
+    }
+
 
 }

@@ -16,6 +16,9 @@ const null_div = '<div class="empty">\n' +
     '  </p>\n' +
     '</div>\n'
 
+const trash_svg = `<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-trash"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>`
+const check_svg = `<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-check"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg>`
+const x_svg = `<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-x"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>`
 const viewCard = document.getElementById('view-card')
 const billCard = document.getElementById('bill-card')
 query_select_callback()
@@ -139,7 +142,7 @@ function transaction_search(){
         order : orderInput.value,
     }
 
-    transaction_search_init(params)
+
     fetch('api/money/view',{
         method : 'POST',
         headers: {
@@ -249,6 +252,72 @@ function transaction_search_init(params){
     billTitleCond.innerHTML = params.condition
 }
 
+
+function delete_func(event){
+    const target = event.currentTarget
+    const parma = JSON.parse(target.value)
+    const btnDiv = document.getElementById("btn-div-"+parma.id)
+
+    btnDiv.innerHTML = ''
+
+    const primaryBtn =  get_primary_button(check_svg)
+
+    const dangerBtn = get_danger_button(x_svg)
+    const alertDiv = document.getElementById("table-alert")
+    primaryBtn.addEventListener("click",function (){
+        btnDiv.innerHTML = loading_div
+        
+
+        let req = {
+            uid :document.getElementById('uid-input').value,
+            transaction:parma
+        }
+
+        fetch('api/money',{
+            method : 'DELETE',
+            headers: {
+                'Content-Type': 'application/json' // 指定请求头为JSON格式
+            },
+            body:JSON.stringify(req),
+        }).then(function(response) {
+            return response.json();
+        }).then(function (data){
+            btnDiv.innerHTML = ''
+            btnDiv.appendChild(get_hidden_btn())
+            btnDiv.appendChild(target)
+            btnDiv.appendChild(get_hidden_btn())
+            if ('Code' in data){
+                if (data.Code>0){
+                    // 失败
+                    alertDiv.innerHTML = get_fail_alert("失败！",data.Message)
+                    return
+                }
+            }
+            // 成功
+            alertDiv.innerHTML = get_success_alert("成功！","你删除了一条记录")
+            bill_ltb.update_page()
+
+        }).catch(function (error){
+            alertDiv.innerHTML = get_fail_alert("失败！",error)
+            btnDiv.innerHTML = ''
+            btnDiv.appendChild(get_hidden_btn())
+            btnDiv.appendChild(target)
+            btnDiv.appendChild(get_hidden_btn())
+        })
+    })
+    dangerBtn.addEventListener("click",function (){
+        btnDiv.innerHTML = ''
+        btnDiv.appendChild(get_hidden_btn())
+        btnDiv.appendChild(target)
+        btnDiv.appendChild(get_hidden_btn())
+    })
+
+    btnDiv.appendChild(primaryBtn)
+    btnDiv.appendChild(get_hidden_btn())
+    btnDiv.appendChild(dangerBtn)
+
+}
+
 function bill_inner(limit,offset){
 
     const billTable = document.getElementById("bill-table")
@@ -292,16 +361,19 @@ function bill_inner(limit,offset){
                     <th>来源/用途</th>
                     <th>金额</th>
                     <th>备注</th>
+                    <th></th>
+                
                   </tr>
                   </thead>
 
                   <tbody id="bill-tbody">
-                    {tbs}
+                    
                   </tbody>
             `
 
             const transactions = responseData.Transactions
-            const tbs = document.createElement('div')
+
+            const tbody = document.getElementById("bill-tbody")
             const tForEach = transactions.forEach(transaction=>{
 
                 const tr = document.createElement('tr')
@@ -316,6 +388,21 @@ function bill_inner(limit,offset){
                 const th5 = document.createElement('th')
                 th5.innerHTML = transaction.note
 
+                const th6 = document.createElement('th')
+
+
+
+                const deleteBtn = get_danger_button(trash_svg)
+
+
+                const btnDiv = document.createElement('div')
+                btnDiv.id = "btn-div-" + transaction.id
+                deleteBtn.value = JSON.stringify(transaction)
+                deleteBtn.addEventListener('click', delete_func)
+                btnDiv.appendChild(get_hidden_btn())
+                btnDiv.appendChild(deleteBtn)
+                btnDiv.appendChild(get_hidden_btn())
+                th6.appendChild(btnDiv)
 
 
                 tr.appendChild(th1)
@@ -323,18 +410,18 @@ function bill_inner(limit,offset){
                 tr.appendChild(th3)
                 tr.appendChild(th4)
                 tr.appendChild(th5)
+                tr.appendChild(th6)
+                tbody.appendChild(tr)
 
 
-                tbs.appendChild(tr)
 
             })
             Promise.all([tForEach]).then(()=>{
-                if (tbs.innerHTML===''){
+
+                if (tbody.innerHTML===''){
                     billTable.innerHTML = null_div
                 }
-                else {
-                    billTable.innerHTML =billTable.innerHTML.replace("{tbs}",tbs.innerHTML)
-                }
+
                 resolve(transactions.length); // 将game_infos数组的长度作为结果传递
             })
         }).catch(function (error) {

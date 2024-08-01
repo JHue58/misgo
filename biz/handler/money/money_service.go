@@ -14,7 +14,7 @@ import (
 	moneyM "github.com/jhue/misgo/db/model/money"
 	"github.com/jhue/misgo/db/model/user"
 	"github.com/jhue/misgo/internal/mislog"
-	"github.com/jhue/misgo/internal/util"
+	"math"
 	"strings"
 	"time"
 )
@@ -118,6 +118,7 @@ func TransactionGet(ctx context.Context, c *app.RequestContext) {
 
 	for _, transaction := range b {
 		resp.Transactions = append(resp.Transactions, &money.Transaction{
+			ID:       int64(transaction.ID),
 			Type:     transaction.Type,
 			Category: transaction.Category,
 			Amount:   float32(transaction.Amount),
@@ -192,13 +193,14 @@ func TransactionGetView(ctx context.Context, c *app.RequestContext) {
 	var totalIncome, totalExpenditure float64
 
 	if incomeCount > 0 {
-		if err := d.Model(&moneyM.Transaction{}).Select("SUM(amount)").Where(query, u.ID, startDate, endDate, "收入").Scan(&totalIncome).Error; err != nil {
+		if err := d.Model(moneyM.Model()).Select("ROUND(SUM(amount),2)").Where(query, u.ID, startDate, endDate, "收入").Scan(&totalIncome).Error; err != nil {
 			bizCtx.DBError(err)
 			return
 		}
+		totalIncome = math.Round(totalIncome * 100)
 	}
 	if expenditureCount > 0 {
-		if err := d.Model(&moneyM.Transaction{}).Select("SUM(amount)").Where(query, u.ID, startDate, endDate, "支出").Scan(&totalExpenditure).Error; err != nil {
+		if err := d.Model(moneyM.Model()).Select("ROUND(SUM(amount),2)").Where(query, u.ID, startDate, endDate, "支出").Scan(&totalExpenditure).Error; err != nil {
 			bizCtx.DBError(err)
 			return
 		}
@@ -213,6 +215,7 @@ func TransactionGetView(ctx context.Context, c *app.RequestContext) {
 	}
 	if incomeCount > 0 {
 		resp.LargestIncome = &money.Transaction{
+			ID:       int64(largestIncome.ID),
 			Type:     largestIncome.Type,
 			Category: largestIncome.Category,
 			Amount:   float32(largestIncome.Amount),
@@ -223,6 +226,7 @@ func TransactionGetView(ctx context.Context, c *app.RequestContext) {
 
 	if expenditureCount > 0 {
 		resp.LargestExpenditure = &money.Transaction{
+			ID:       int64(largestExpenditure.ID),
 			Type:     largestExpenditure.Type,
 			Category: largestExpenditure.Category,
 			Amount:   float32(largestExpenditure.Amount),
@@ -235,16 +239,74 @@ func TransactionGetView(ctx context.Context, c *app.RequestContext) {
 	mislog.DefaultLogger.Infof("MoneyGetView Success [Name] %s \n", u.Name)
 }
 
-func ToReportMarkDown(title string, b []*moneyM.Transaction) (string, error) {
-
-	builder := strings.Builder{}
-	builder.WriteString(title)
-	builder.WriteString("|日期|类型|用途/来源|金额|备注|\n|-|-|-|-|-|\n")
-	for _, transaction := range b {
-		builder.WriteString(transaction.Markdown())
+// TransactionDelete .
+// @router api/money [DELETE]
+func TransactionDelete(ctx context.Context, c *app.RequestContext) {
+	bizCtx := request.NewBizContext(c)
+	var err error
+	var req money.TransactionReq
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		bizCtx.ParmaError(err)
+		return
+	}
+	u, ok := user.ExtractUser(ctx)
+	if !ok {
+		bizCtx.ParmaError(base.UIDError)
+		return
+	}
+	if req.OneTransaction == nil {
+		bizCtx.ParmaError(money.ErrTransactionError)
+		return
+	}
+	if req.OneTransaction.ID <= 0 {
+		bizCtx.ParmaError(money.ErrTransactionIDError)
+		return
 	}
 
-	h, err := util.ToMarkDownHtml(builder.String())
-	fmt.Println(h)
-	return h, err
+	d := db.Get()
+
+	if err := d.Where("user_id = ? AND id = ? ", u.ID, req.OneTransaction.ID).Delete(moneyM.Model()).Error; err != nil {
+		bizCtx.DBError(err)
+		return
+	}
+
+	bizCtx.Success()
+	mislog.DefaultLogger.Infof("MoneyDelete Success [Name] %s [DeleteID] %d \n", u.Name, req.OneTransaction.ID)
+
+}
+
+// TransactionContent .
+// @router api/money/content [POST]
+func TransactionContent(ctx context.Context, c *app.RequestContext) {
+	bizCtx := request.NewBizContext(c)
+	var err error
+	var req money.TransactionContentReq
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		bizCtx.ParmaError(err)
+		return
+	}
+	u, ok := user.ExtractUser(ctx)
+	if !ok {
+		bizCtx.ParmaError(base.UIDError)
+		return
+	}
+	req.Content = strings.TrimSpace(req.Content)
+	if req.Content == "" {
+		bizCtx.ParmaError(money.ErrContentEmptyError)
+		return
+	}
+
+	result := money.DefaultTransactionParser.Parse(req.Content)
+	if len(result) <= 0 {
+		bizCtx.ParmaError(money.ErrParserError)
+		return
+	}
+	resp := money.TransactionResp{
+		Transactions: result,
+	}
+
+	bizCtx.Response(&resp)
+	mislog.DefaultLogger.Infof("MoneyContent Success [Name] %s [ParserCount] %d \n", u.Name, len(result))
 }

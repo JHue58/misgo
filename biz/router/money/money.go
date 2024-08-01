@@ -19,9 +19,12 @@ func Register(r *server.Hertz) {
 	root := r.Group("/", rootMw()...)
 	{
 		_api := root.Group("/api", _apiMw()...)
-		_api.PUT("/money", append(_transactionputMw(), money.TransactionPut)...)
+		_api.POST("/money", append(_transactiongetMw(), money.TransactionGet)...)
 		_money := _api.Group("/money", _moneyMw()...)
 		_money.POST("/view", append(_transactiongetviewMw(), money.TransactionGetView)...)
-		_api.POST("/money", append(_transactiongetMw(), money.TransactionGet)...)
+		_api.DELETE("/money", append(_transactiondeleteMw(), money.TransactionDelete)...)
+		_api.PUT("/money", append(_transactionputMw(), money.TransactionPut)...)
+		_money0 := _api.Group("/money", _money0Mw()...)
+		_money0.POST("/content", append(_transactioncontentMw(), money.TransactionContent)...)
 	}
 }

@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+var model = Transaction{}
+
 type Transaction struct {
 	gorm.Model
 	UserID uint `gorm:"index"`
@@ -32,4 +34,8 @@ func (t *Transaction) Markdown() string {
 	formatTime := t.Time.Format("2006-01-02 15:04:05")
 	return fmt.Sprintf("| %s | %s | %s | %.2f | %s | \n",
 		formatTime, t.Type, t.Category, t.Amount, t.Note)
+}
+
+func Model() *Transaction {
+	return &model
 }

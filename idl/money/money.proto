@@ -14,6 +14,7 @@ message Transaction {
   float Amount = 3[(api.body)="amount"];
   string Note = 4[(api.body)="note"];
   int64 Time = 5[(api.body)="time"];
+  int64 ID = 6[(api.body)="id"];
 }
 
 message TransactionView {
@@ -36,6 +37,11 @@ message TransactionView {
 message TransactionReq {
   string UID = 1[(api.body)="uid"];
   Transaction OneTransaction = 2[(api.body)="transaction"];
+}
+
+message TransactionContentReq {
+  string UID = 1[(api.body)="uid"];
+  string Content = 2[(api.body)="content"];
 }
 
 
@@ -61,10 +67,11 @@ message TransactionGetReq {
 
 }
 
+
+
 message TransactionResp {
   repeated Transaction Transactions = 1;
 }
-
 
 
 
@@ -75,10 +82,19 @@ service MoneyService{
   rpc TransactionPut(TransactionReq) returns(TransactionResp) {
     option (api.put) = "api/money";
   }
+  rpc TransactionContent(TransactionContentReq) returns(TransactionResp) {
+    option (api.post) = "api/money/content";
+  }
+
   rpc TransactionGet(TransactionGetReq) returns(TransactionResp) {
     option (api.post) = "api/money";
+  }
+  rpc TransactionDelete(TransactionReq) returns(TransactionResp) {
+    option (api.delete) = "api/money";
   }
   rpc TransactionGetView(TransactionGetReq) returns(TransactionView) {
     option (api.post) = "api/money/view";
   }
+
+
 }

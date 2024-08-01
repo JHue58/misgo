@@ -2,6 +2,7 @@ package biz
 
 import (
 	"github.com/jhue/misgo/internal/util"
+	"slices"
 	"sync/atomic"
 )
 
@@ -18,6 +19,32 @@ type Config struct {
 	MoneyConfig     `yaml:"moneyConfig"`
 }
 
+func (c Config) Equal(target Config) (equal bool) {
+	if c.ClipBoardConfig != target.ClipBoardConfig {
+		return false
+	}
+	if c.RecordConfig != target.RecordConfig {
+		return false
+	}
+	if c.MoneyConfig.MaxGetCount != target.MoneyConfig.MaxGetCount {
+		return false
+	}
+
+	srcParse, dstParse := c.MoneyConfig.ParserConfig, target.MoneyConfig.ParserConfig
+
+	if !slices.Equal(srcParse.Separators, dstParse.Separators) {
+		return false
+	}
+	if !slices.Equal(srcParse.ExpenseKeywords, dstParse.ExpenseKeywords) {
+		return false
+	}
+	if !slices.Equal(srcParse.IncomeKeywords, dstParse.IncomeKeywords) {
+		return false
+	}
+	return true
+
+}
+
 type ClipBoardConfig struct {
 	MaxStore      int64  `yaml:"maxStore"`
 	FileStorePath string `yaml:"fileStorePath"`
@@ -29,7 +56,14 @@ type RecordConfig struct {
 }
 
 type MoneyConfig struct {
-	MaxGetCount int64 `yaml:"maxGetCount"`
+	MaxGetCount  int64 `yaml:"maxGetCount"`
+	ParserConfig `yaml:"parserConfig"`
+}
+
+type ParserConfig struct {
+	Separators      []string `yaml:"separators"`
+	ExpenseKeywords []string `yaml:"expenseKeywords"`
+	IncomeKeywords  []string `yaml:"incomeKeywords"`
 }
 
 func InitBizConfig() error {
@@ -38,7 +72,7 @@ func InitBizConfig() error {
 	if err != nil {
 		return err
 	}
-	if GetBizConfig() != c {
+	if !GetBizConfig().Equal(c) {
 		conf.Store(&c)
 	}
 	return nil
@@ -61,5 +95,8 @@ func GetBizConfig() Config {
 	} else {
 		return *c
 	}
+}
 
+func SetBizConfig(c Config) {
+	conf.Store(&c)
 }

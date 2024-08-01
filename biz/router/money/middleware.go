@@ -35,3 +35,23 @@ func _transactiongetviewMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _transactiondeleteMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _money0Mw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _transactionputcontentMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _transactioncontentMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

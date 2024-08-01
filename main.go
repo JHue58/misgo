@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/jhue/misgo/biz"
 	"github.com/jhue/misgo/biz/middleware"
 	"github.com/jhue/misgo/internal/conf"
@@ -57,6 +58,7 @@ func newMonitor() monitor.Monitor {
 			}
 			after := conf.GetConfig()
 			if before != after {
+				hlog.SetLevel(after.LogConfig.HLevel())
 				return true, "config修改成功", nil
 			} else {
 				return
@@ -69,7 +71,7 @@ func newMonitor() monitor.Monitor {
 				return
 			}
 			after := biz.GetBizConfig()
-			if before != after {
+			if !before.Equal(after) {
 				return true, "bizConfig修改成功", nil
 			} else {
 				return

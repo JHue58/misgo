@@ -8,3 +8,7 @@ recordConfig:
 
 moneyConfig:
   maxGetCount: 10
+  parserConfig:
+    separators: [",", "，", "。","；",";", "\n"]
+    expenseKeywords: ["用了", "花了", "支出","开销","花费"]
+    incomeKeywords: ["收入", "得到","获得"]
