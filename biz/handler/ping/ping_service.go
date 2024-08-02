@@ -4,7 +4,9 @@ package ping
 
 import (
 	"context"
+	"fmt"
 	"github.com/jhue/misgo/biz/request"
+	"github.com/jhue/misgo/internal/conf"
 	"github.com/jhue/misgo/internal/mislog"
 	"time"
 
@@ -15,10 +17,12 @@ import (
 
 // Ping .
 // @router /ping [GET]
+
 func Ping(ctx context.Context, c *app.RequestContext) {
+	config := conf.GetConfig()
 	biz := request.NewBizContext(c)
 	resp := &ping.PingResp{
-		Message: "pong",
+		Message: fmt.Sprintf("pong from misgo%s", config.Version),
 		Date:    time.Now().String(),
 	}
 	biz.Response(resp)

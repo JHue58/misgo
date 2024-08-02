@@ -177,7 +177,12 @@ function transaction_view_init(params,viewData) {
     }else{
         viewTitle.textContent = params.time_range+"的总览"
     }
-    viewTitleCond.innerHTML = params.condition
+    if (params.condition===""){
+        viewTitleCond.innerHTML = "ALL"
+    }else{
+        viewTitleCond.innerHTML = params.condition
+    }
+
 
     const countDiv = document.getElementById("count-view")
     countDiv.innerHTML = viewData.Count
