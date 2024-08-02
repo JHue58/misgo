@@ -249,7 +249,12 @@ function transaction_search_init(params){
     }else{
         billTitle.textContent = params.time_range+"的账单"
     }
-    billTitleCond.innerHTML = params.condition
+    if (params.condition===""){
+        billTitleCond.innerHTML = "ALL"
+    }else{
+        billTitleCond.innerHTML = params.condition
+    }
+
 }
 
 
