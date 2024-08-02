@@ -14,7 +14,6 @@ import (
 	moneyM "github.com/jhue/misgo/db/model/money"
 	"github.com/jhue/misgo/db/model/user"
 	"github.com/jhue/misgo/internal/mislog"
-	"math"
 	"strings"
 	"time"
 )
@@ -197,7 +196,6 @@ func TransactionGetView(ctx context.Context, c *app.RequestContext) {
 			bizCtx.DBError(err)
 			return
 		}
-		totalIncome = math.Round(totalIncome * 100)
 	}
 	if expenditureCount > 0 {
 		if err := d.Model(moneyM.Model()).Select("ROUND(SUM(amount),2)").Where(query, u.ID, startDate, endDate, "支出").Scan(&totalExpenditure).Error; err != nil {
