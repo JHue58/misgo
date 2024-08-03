@@ -1,13 +1,12 @@
 module github.com/jhue/misgo
 
-go 1.22
+go 1.20
 
 require (
 	github.com/bytedance/gopkg v0.0.0-20240711085056-a03554c296f8
 	github.com/cloudwego/hertz v0.9.1
 	github.com/golang/protobuf v1.5.0
 	github.com/panjf2000/ants/v2 v2.10.0
-	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/stretchr/testify v1.8.2
 	github.com/yuin/goldmark v1.7.4
 	google.golang.org/protobuf v1.27.1

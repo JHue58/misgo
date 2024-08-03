@@ -1,3 +1,5 @@
+
+let global_uid
 const loading_div = '<div class="spinner-border"></div>'
 
 const null_div = '<div class="empty">\n' +
@@ -88,6 +90,10 @@ function uid_init() {
 
     if (uid!=null){
         init_user_info(uid)
+        init_transaction_personal(uid)
+        global_uid = uid
+
+        init_transaction_personal_daily("7")
     }
 
 }
@@ -111,6 +117,304 @@ function init_user_info(uid){
 
         })
         .catch(error => console.error(error));
+}
+
+
+function init_transaction_personal(uid){
+    const radios= document.querySelectorAll('input[name="daily"]');
+    radios.forEach(radio => {
+        radio.addEventListener('change', function (event){
+            init_transaction_personal_daily(event.target.value)
+        });
+    });
+
+    const userDay = document.getElementById("user-day")
+    const userIncome = document.getElementById("user-income")
+    const userExpenditure = document.getElementById("user-expenditure")
+    const userIncomeSpan = document.getElementById("user-income-span")
+    const userBalanceSpan = document.getElementById("user-balance-span")
+    const userExpenditureSpan = document.getElementById("user-expenditure-span")
+    fetch("api/money/personal",{
+        method:"POST",
+        headers: {
+            'Content-Type': 'application/json' // 指定请求头为JSON格式
+        },
+        body:JSON.stringify({"uid":uid})
+    }).then(response=>response.json()).then(
+        data =>{
+            // 取得StartTime的Unix时间戳
+            const startTime = data.StartTime * 1000; // 转换为毫秒
+            // 取得当前时间的Unix时间戳
+            const currentTime = new Date().getTime();
+            // 计算两个时间戳之间的差异，以毫秒为单位
+            const differenceInMilliseconds = currentTime - startTime;
+            // 将毫秒差异转换为天数
+            const days = Math.ceil(differenceInMilliseconds / (1000 * 60 * 60 * 24));
+            userDay.innerHTML = "记账"+days+"天"
+            userIncome.innerHTML = "收入"+data.IncomeCount+"次"
+            userExpenditure.innerHTML = "支出"+data.ExpenditureCount+"次"
+            userIncomeSpan.innerHTML = data.Income
+            userBalanceSpan.innerHTML = data.Balance
+            userExpenditureSpan.innerHTML = data.Expenditure
+        }
+    )
+}
+
+function init_transaction_personal_daily(days) {
+    const uid = global_uid
+
+    // 获取当前日期
+    let currentDate = new Date();
+    let endTime = Math.floor(currentDate.getTime() / 1000); // 当前时间的Unix时间戳（秒）
+
+    // 计算days天前的日期
+    let startDate = new Date();
+    startDate.setDate(currentDate.getDate() - parseInt(days));
+    startDate.setHours(0, 0, 0, 0); // 将时间部分设置为0点
+    let startTime = Math.floor(startDate.getTime() / 1000); // days天前0点的Unix时间戳（秒）
+
+    // 构造参数对象
+    const params = {
+        uid: uid,
+        time_range: "自定义",
+        start_time: startTime,
+        end_time: endTime,
+        condition: "", // 这里可以根据需要填写查询条件
+        order: "time",
+        count: -1
+    };
+
+    fetch("api/money",{
+        method:"POST",
+        headers: {
+            'Content-Type': 'application/json' // 指定请求头为JSON格式
+        },
+        body:JSON.stringify(params)
+    }).then(response=>response.json()).then(data=>{
+        const transactions = data.Transactions
+        let expenditures = {}; // 支出字典
+        let incomes = {}; // 收入字典
+        let dailyExpenditures = {}; // 每日支出字典
+        let dailyIncomes = {}; // 每日收入字典
+        let dailies = {}; // 每日日期字典
+
+        transactions.forEach(transaction => {
+            let { type, category, amount, time } = transaction;
+
+            // 将 time 转换为 Date 对象并格式化为 MM-DD
+            let date = new Date(time * 1000);
+            let dateKey = `${date.getMonth() + 1}-${date.getDate()}`; // MM-DD 格式
+            dailies[dateKey] = null
+            if (type === "支出") {
+                // 更新支出字典
+                if (expenditures[category]) {
+                    expenditures[category] += amount;
+                } else {
+                    expenditures[category] = amount;
+                }
+
+                // 更新每日支出字典
+                if (dailyExpenditures[dateKey]) {
+                    dailyExpenditures[dateKey] += amount;
+                } else {
+                    dailyExpenditures[dateKey] = amount;
+                }
+            } else if (type === "收入") {
+                // 更新收入字典
+                if (incomes[category]) {
+                    incomes[category] += amount;
+                } else {
+                    incomes[category] = amount;
+                }
+
+                // 更新每日收入字典
+                if (dailyIncomes[dateKey]) {
+                    dailyIncomes[dateKey] += amount;
+                } else {
+                    dailyIncomes[dateKey] = amount;
+                }
+            }
+        });
+        const chartIncomePie = document.getElementById("chart-income-pie")
+        chartIncomePie.innerHTML = ""
+        window.ApexCharts && (new ApexCharts(chartIncomePie, {
+            chart: {
+                type: "donut",
+                fontFamily: 'inherit',
+                height: 240,
+                sparkline: {
+                    enabled: true
+                },
+                animations: {
+                    enabled: false
+                },
+            },
+
+            fill: {
+                opacity: 1,
+            },
+            series: Object.values(incomes),
+            labels: Object.keys(incomes),
+            tooltip: {
+                theme: 'dark',
+                y: {
+                    formatter: function (val) {
+                        return '￥' + val.toFixed(2); // 工具提示也格式化为金额模式，四舍五入到两位小数
+                    }
+                },
+                fillSeriesColor: false
+            },
+            grid: {
+                strokeDashArray: 4,
+            },
+            //colors: [tabler.getColor("green"),tabler.getColor("red"),tabler.getColor("black")],
+            legend: {
+                show: true,
+                position: 'bottom',
+                offsetY: 12,
+                markers: {
+                    width: 10,
+                    height: 10,
+                    radius: 100,
+                },
+                itemMargin: {
+                    horizontal: 8,
+                    vertical: 8
+                },
+            },
+
+        })).render();
+
+        const chartExpenditurePie = document.getElementById("chart-expenditure-pie")
+        chartExpenditurePie.innerHTML = ""
+        window.ApexCharts && (new ApexCharts(chartExpenditurePie, {
+            chart: {
+                type: "donut",
+                fontFamily: 'inherit',
+                height: 240,
+                sparkline: {
+                    enabled: true
+                },
+                animations: {
+                    enabled: false
+                },
+            },
+
+            fill: {
+                opacity: 1,
+            },
+            series: Object.values(expenditures),
+            labels: Object.keys(expenditures),
+            tooltip: {
+                theme: 'dark',
+                y: {
+                    formatter: function (val) {
+                        return '￥' + val.toFixed(2); // 工具提示也格式化为金额模式，四舍五入到两位小数
+                    }
+                },
+                fillSeriesColor: false
+            },
+            grid: {
+                strokeDashArray: 4,
+            },
+            //colors: [tabler.getColor("green"),tabler.getColor("red"),tabler.getColor("black")],
+            legend: {
+                show: true,
+                position: 'bottom',
+                offsetY: 12,
+                markers: {
+                    width: 10,
+                    height: 10,
+                    radius: 100,
+                },
+                itemMargin: {
+                    horizontal: 8,
+                    vertical: 8
+                },
+            },
+
+        })).render();
+
+        const chartDaily = document.getElementById('chart-daily')
+        chartDaily.innerHTML = ""
+        window.ApexCharts && (new ApexCharts(chartDaily, {
+            chart: {
+                type: "line",
+                fontFamily: 'inherit',
+                height: 240,
+                parentHeightOffset: 0,
+                toolbar: {
+                    show: false,
+                },
+                animations: {
+                    enabled: false
+                },
+            },
+
+            fill: {
+                opacity: 1,
+            },
+            stroke: {
+                width: 2,
+                lineCap: "round",
+                curve: "straight",
+            },
+            series: [{
+                name: "收入",
+                data: Object.values(dailyIncomes)
+            },{name:"支出",data:Object.values(dailyExpenditures)}],
+            tooltip: {
+                theme: 'dark'
+            },
+            grid: {
+                padding: {
+                    top: -20,
+                    right: 0,
+                    left: -4,
+                    bottom: -4
+                },
+                strokeDashArray: 4,
+            },
+            xaxis: {
+                labels: {
+                    padding: 0,
+                },
+                tooltip: {
+                    enabled: false
+                },
+                tickAmount: 'dataPoints', // 根据实际数据点数量显示刻度
+                tickPlacement: 'on', // 确保刻度放置在数据点上
+                //type: 'datetime',
+            },
+            yaxis: {
+                labels: {
+                    padding: 4,
+                    formatter: function (val) {
+                        return '￥' + val.toFixed(2); // Y轴标签也显示为金额模式，四舍五入到两位小数
+                    }
+                },
+
+            },
+            labels: Object.keys(dailies),
+            colors: [tabler.getColor("yellow"), tabler.getColor("green"), tabler.getColor("primary")],
+            legend: {
+                show: true,
+                position: 'bottom',
+                offsetY: 12,
+                markers: {
+                    width: 10,
+                    height: 10,
+                    radius: 100,
+                },
+                itemMargin: {
+                    horizontal: 8,
+                    vertical: 8
+                },
+            },
+        })).render();
+
+    })
+
 }
 
 function transaction_search(){
@@ -230,6 +534,7 @@ function transaction_view_init(params,viewData) {
 }
 
 let global_params
+
 const bill_ltb=new LimitTables(document.getElementById('bill-limit-table'),10,'btn btn-success',bill_inner)
 function transaction_search_init(params){
     const startTime = new Date(params.start_time).getTime() / 1000; // 将毫秒时间戳转换为秒时间戳

@@ -3,6 +3,7 @@ package db
 import (
 	"github.com/jhue/misgo/db/model"
 	"github.com/jhue/misgo/internal/conf"
+	"github.com/jhue/misgo/internal/mislog"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"time"
@@ -20,6 +21,7 @@ func initDB() {
 	if err != nil {
 		panic(err)
 	}
+
 }
 
 func Get() *gorm.DB {
@@ -50,9 +52,26 @@ func newDB() (*gorm.DB, error) {
 }
 
 func autoMigrate(d *gorm.DB) (err error) {
-	err = d.AutoMigrate(model.GetEmptyModels()...)
+	models := model.GetEmptyModels()
+	err = d.AutoMigrate(models...)
 	if err != nil {
 		return err
 	}
-	return
+
+	return d.Transaction(func(tx *gorm.DB) error {
+		for _, m := range models {
+			boot, ok := m.(model.Boot)
+			if ok {
+				start := time.Now()
+				mislog.DefaultLogger.Infof("%T 正在执行表启动操作...", m)
+				err = boot.Inject(tx)
+				if err != nil {
+					return err
+				}
+				mislog.DefaultLogger.Infof("%T 操作完成! 用时%s", m, time.Since(start).String())
+			}
+		}
+		return nil
+	})
+
 }

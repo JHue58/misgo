@@ -36,6 +36,11 @@ func _transactiongetviewMw() []app.HandlerFunc {
 	return nil
 }
 
+func _transactiongetpersonalviewMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
 func _transactiondeleteMw() []app.HandlerFunc {
 	// your code...
 	return nil

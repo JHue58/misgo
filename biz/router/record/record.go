@@ -19,7 +19,7 @@ func Register(r *server.Hertz) {
 	root := r.Group("/", rootMw()...)
 	{
 		_api := root.Group("/api", _apiMw()...)
-		_api.PUT("/record", append(_recordMw(), record.Record)...)
 		_api.POST("/record", append(_recordgetMw(), record.RecordGet)...)
+		_api.PUT("/record", append(_recordMw(), record.Record)...)
 	}
 }

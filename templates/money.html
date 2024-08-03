@@ -41,14 +41,18 @@
         <div class="col-12">
           <div class="card-lg">
             <div class="card-body" style="height: 10rem">
-              <div class="text-center">
+              <div class="text-center mt-0">
                 <h1 id="user-name"><div class="placeholder col-1"></div></h1>
-<!--                <h5 id="user-win-ratio">胜率：null</h5>-->
-<!--                <div id="score-title"><span class="badge bg-lime">初心</span></div>-->
-                <button onclick="transaction_default()" type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#transaction-search-modal">
-                  <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
-                  查询
-                </button>
+                </div>
+
+
+
+              <div class="text-center mt-3">
+                <span class="badge bg-azure" id="user-day">记账0天</span>
+                <span class="badge bg-red" id="user-income">收入0次</span>
+                <span class="badge bg-green" id="user-expenditure">支出0次</span>
+              </div>
+
                 <div class="modal" id="transaction-search-callback-modal" tabindex="-1">
                   <!--此处由JS添加-->
                 </div>
@@ -158,6 +162,175 @@
         <div class="col-12">
           <div class="card-lg"><div class="card-body"></div> </div>
         </div>
+
+      <div class="col-12">
+        <div class="card-lg">
+          <div class="card-body" style="height: auto">
+            <div class="row row-deck row-cards">
+              <div class="col-4">
+                <div class="card">
+                  <div class="card-title">
+                    <div class="text-center" style="margin-top: 0.9rem"><h3>总收入</h3></div>
+                    <div class="hr-text"></div>
+                  </div>
+                  <div  class="card-body-scrollable" style="height: 12rem">
+                    <div class="text-center" >
+                      <h3 >
+
+                        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-currency-yen"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 19v-7l-5 -7m10 0l-5 7" /><path d="M8 17l8 0" /><path d="M8 13l8 0" /></svg>
+                        <span id="user-income-span">0.00</span>
+                      </h3>
+                    </div>
+                  </div>
+                  <div class="ribbon ribbon-top ribbon-start ribbon-bookmark bg-red">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-star" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                      <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="card">
+                  <div class="card-title">
+                    <div class="text-center" style="margin-top: 0.9rem"><h3>余额</h3></div>
+                    <div class="hr-text"></div>
+                  </div>
+                  <div  class="card-body-scrollable" style="height: 12rem">
+                    <div class="text-center" >
+                      <h3 >
+                        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-currency-yen"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 19v-7l-5 -7m10 0l-5 7" /><path d="M8 17l8 0" /><path d="M8 13l8 0" /></svg>
+                        <span id="user-balance-span">0.00</span>
+                      </h3>
+                    </div>
+                  </div>
+                  <div class="ribbon ribbon-top ribbon-start ribbon-bookmark bg-black">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-star" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                      <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="card">
+                  <div class="card-title">
+                    <div class="text-center" style="margin-top: 0.9rem"><h3>总支出</h3></div>
+                    <div class="hr-text"></div>
+                  </div>
+                  <div class="card-body-scrollable" style="height: 12rem">
+                    <div class="text-center" >
+                      <h3 >
+
+                        <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-currency-yen"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 19v-7l-5 -7m10 0l-5 7" /><path d="M8 17l8 0" /><path d="M8 13l8 0" /></svg>
+                        <span id="user-expenditure-span">0.00</span>
+                      </h3>
+                    </div>
+                  </div>
+                  <div class="ribbon ribbon-top ribbon-start ribbon-bookmark bg-green">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-star" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                      <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="card-lg">
+          <div class="card-body">
+            <div class="card-title">
+              <div class="text-center"><h3>近况</h3></div>
+              <div class="hr-text"></div>
+            </div>
+            <div class="text-center">
+            <div class="mb-3">
+              <div class="form-selectgroup">
+                <label class="form-selectgroup-item">
+                  <input type="radio"  name="daily" value="7" class="form-selectgroup-input" checked />
+                  <span class="form-selectgroup-label">
+
+
+                                7日内
+                              </span>
+                </label>
+                <label class="form-selectgroup-item">
+                  <input type="radio" name="daily" value="30" class="form-selectgroup-input" />
+                  <span class="form-selectgroup-label">
+
+                                30天内
+                              </span>
+                </label>
+              </div>
+            </div>
+            </div>
+
+            <div class="row row-deck row-cards">
+              <div class="col-6">
+                <div class="card">
+                  <div class="card-body"style="height: 23rem">
+                    <div class="card-title">
+                      <div class="text-center"><h3 >收入占比</h3><h5 id="friendly-1-matches"></h5><h5 id="friendly-1-ratios"></h5></div>
+                    </div>
+                    <div id="chart-income-pie" class="chart-lg">
+
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="card">
+                  <div class="card-body"style="height: 23rem">
+                    <div class="card-title">
+                      <div class="text-center"><h3 >支出占比</h3><h5 id="friendly-2-matches"></h5><h5 id="friendly-2-ratios"></h5></div>
+                    </div>
+                    <div id="chart-expenditure-pie" class="chart-lg">
+
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div class="hr-text" style="visibility: hidden"></div>
+            <div class="col-12" >
+              <div class="card card-lg">
+                <div class="card-body" style="height: auto">
+                  <div class="card-title">
+                    <div class="card-title">
+                      <div class="text-center"><h3 >收支曲线</h3></div>
+                      <div id="chart-daily" class="chart-lg">
+
+                      </div>
+                    </div>
+                  </div>
+
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+
+      <div class="col-12">
+        <div class="card-title">
+          <div class="text-center"><h3>账单</h3></div>
+          <div class="hr-text"></div>
+        </div>
+        <div class="text-center mt-3" >
+          <button onclick="transaction_default()" type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#transaction-search-modal">
+            <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
+            查询
+          </button>
+        </div>
+        <div class="hr-text" style="visibility:hidden;"></div>
         <div class="col-12" id="view-card">
           <div class="card card-lg">
             <div class="card-body" style="height: auto">
@@ -217,8 +390,6 @@
             </div>
           </div>
         </div>
-
-
         <div class="col-12">
           <div class="card-lg"><div class="card-body"></div> </div>
         </div>
@@ -257,7 +428,9 @@
             </div>
           </div>
         </div>
-        <div class="col-12">
+      </div>
+
+      <div class="col-12">
           <div class="card-lg"><div class="card-body"></div> </div>
         </div>
       </div>

@@ -38,12 +38,28 @@ message TransactionReq {
   string UID = 1[(api.body)="uid"];
   Transaction OneTransaction = 2[(api.body)="transaction"];
 }
-
 message TransactionContentReq {
   string UID = 1[(api.body)="uid"];
   string Content = 2[(api.body)="content"];
 }
+message TransactionPersonalView{
+  // 总共记账
+  int64 Count = 1 ;
+  // 总共收入Count
+  int64 IncomeCount = 2;
+  // 总共支出Count
+  int64 ExpenditureCount = 3;
+  // 总收入
+  float Income = 4;
+  // 总支出
+  float Expenditure = 5;
+  // 剩余
+  float Balance = 6;
+  // 开始记账的时间
+  int64 StartTime = 7;
 
+
+}
 
 
 
@@ -67,11 +83,10 @@ message TransactionGetReq {
 
 }
 
-
-
 message TransactionResp {
   repeated Transaction Transactions = 1;
 }
+
 
 
 
@@ -94,6 +109,9 @@ service MoneyService{
   }
   rpc TransactionGetView(TransactionGetReq) returns(TransactionView) {
     option (api.post) = "api/money/view";
+  }
+  rpc TransactionGetPersonalView(TransactionGetReq) returns(TransactionPersonalView){
+    option (api.post) = "api/money/personal";
   }
 
 

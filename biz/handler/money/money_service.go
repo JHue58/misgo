@@ -14,6 +14,8 @@ import (
 	moneyM "github.com/jhue/misgo/db/model/money"
 	"github.com/jhue/misgo/db/model/user"
 	"github.com/jhue/misgo/internal/mislog"
+	"gorm.io/gorm"
+	"math"
 	"strings"
 	"time"
 )
@@ -64,7 +66,20 @@ func TransactionPut(ctx context.Context, c *app.RequestContext) {
 		Note:     req.OneTransaction.Note,
 		Time:     time.Unix(req.OneTransaction.Time, 0),
 	}
-	d.Create(&entry)
+	err = d.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&entry).Error; err != nil {
+			return err
+		}
+		personal := moneyM.TransactionPersonal{}
+		if err := personal.Update(tx, entry); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		bizCtx.DBError(err)
+		return
+	}
 
 	bizCtx.Success()
 	mislog.DefaultLogger.Infof("Money Success [Name] %s \n", u.Name)
@@ -92,12 +107,17 @@ func TransactionGet(ctx context.Context, c *app.RequestContext) {
 	if req.Count > config.MaxGetCount {
 		req.Count = config.MaxGetCount
 	}
+
 	startDate, endDate, _ := req.GetDateRange()
 	if startDate.After(endDate) {
 		bizCtx.ParmaError(money.ErrStartTimeBeforeEndTime)
 		return
 	}
-	b := make([]*moneyM.Transaction, 0, req.Count)
+	var b []*moneyM.Transaction
+	if req.Count >= 0 {
+		b = make([]*moneyM.Transaction, 0, req.Count)
+	}
+
 	var query string
 	if req.Condition != "" {
 		query = fmt.Sprintf("user_id = ?  AND (time >= ? AND time <= ?) AND %s", req.Condition)
@@ -263,8 +283,22 @@ func TransactionDelete(ctx context.Context, c *app.RequestContext) {
 	}
 
 	d := db.Get()
+	err = d.Transaction(func(tx *gorm.DB) error {
+		var transaction moneyM.Transaction
+		if err := tx.Where("user_id = ? AND id = ? ", u.ID, req.OneTransaction.ID).First(&transaction).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("user_id = ? AND id = ? ", u.ID, req.OneTransaction.ID).Delete(moneyM.Model()).Error; err != nil {
+			return err
+		}
+		personal := moneyM.TransactionPersonal{}
+		if err := personal.UpdateDelete(tx, transaction); err != nil {
+			return err
+		}
+		return nil
 
-	if err := d.Where("user_id = ? AND id = ? ", u.ID, req.OneTransaction.ID).Delete(moneyM.Model()).Error; err != nil {
+	})
+	if err != nil {
 		bizCtx.DBError(err)
 		return
 	}
@@ -307,4 +341,42 @@ func TransactionContent(ctx context.Context, c *app.RequestContext) {
 
 	bizCtx.Response(&resp)
 	mislog.DefaultLogger.Infof("MoneyContent Success [Name] %s [ParserCount] %d \n", u.Name, len(result))
+}
+
+// TransactionGetPersonalView .
+// @router api/money/personal [POST]
+func TransactionGetPersonalView(ctx context.Context, c *app.RequestContext) {
+	bizCtx := request.NewBizContext(c)
+	var err error
+	var req money.TransactionGetReq
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		bizCtx.ParmaError(err)
+		return
+	}
+	u, ok := user.ExtractUser(ctx)
+	if !ok {
+		bizCtx.ParmaError(base.UIDError)
+		return
+	}
+	entry := moneyM.TransactionPersonal{}
+	d := db.Get()
+	res := d.Where("user_id = ?", u.ID).Find(&entry)
+	if res.Error != nil {
+		bizCtx.DBError(res.Error)
+		return
+	}
+	resp := money.TransactionPersonalView{
+		Count:            entry.Count,
+		IncomeCount:      entry.IncomeCount,
+		ExpenditureCount: entry.ExpenditureCount,
+		Income:           float32(math.Round(float64(entry.Income)*100) / 100),
+		Expenditure:      float32(math.Round(float64(entry.Expenditure)*100) / 100),
+		Balance:          float32(math.Round(float64(entry.Balance)*100) / 100),
+		StartTime:        entry.StartTime.Unix(),
+	}
+
+	bizCtx.Response(&resp)
+
+	mislog.DefaultLogger.Infof("MoneyGetPersonalView Success [Name] %s \n", u.Name)
 }

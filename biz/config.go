@@ -2,7 +2,7 @@ package biz
 
 import (
 	"github.com/jhue/misgo/internal/util"
-	"slices"
+	"github.com/jhue/misgo/internal/util/slices"
 	"sync/atomic"
 )
 
