@@ -4,3 +4,4 @@
 rm -rf misgo.db
 rm -rf ./log/*
 rm -rf ./files/*
+rm -rf ./ssh/*

@@ -38,6 +38,7 @@ type Config struct {
 	ServerConfig `yaml:"serverConfig"`
 	DBConfig     `yaml:"dbConfig"`
 	LogConfig    `yaml:"logConfig"`
+	TLSConfig    `yaml:"tlsConfig"`
 }
 
 type ServerConfig struct {
@@ -58,6 +59,11 @@ type DBConfig struct {
 type LogConfig struct {
 	Level   string `yaml:"level"`
 	LogPath string `yaml:"logPath"`
+}
+
+type TLSConfig struct {
+	CrtPath string `yaml:"crtPath"`
+	KeyPath string `yaml:"keyPath"`
 }
 
 func (c LogConfig) HLevel() (level hlog.Level) {
