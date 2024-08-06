@@ -11,6 +11,3 @@ logConfig:
   level: info
   logPath: ./log
 
-tlsConfig:
-  crtPath: ./ssh/misgo.jhue.top.crt
-  keyPath: ./ssh/misgo.jhue.top.key

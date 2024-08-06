@@ -12,7 +12,6 @@ import (
 	"github.com/jhue/misgo/biz/middleware"
 	"github.com/jhue/misgo/internal/conf"
 	"github.com/jhue/misgo/internal/mislog"
-	"github.com/jhue/misgo/internal/tls"
 	"github.com/jhue/misgo/internal/util/size"
 	"github.com/jhue/misgo/pkg/monitor"
 )
@@ -35,14 +34,9 @@ func main() {
 	defer f.Close()
 	mislog.InitLogger(f, config.LogConfig)
 	mislog.DefaultLogger.Infof("misgo version: %s", config.Version)
-	cfg, err := tls.GetTLSConfig()
-	if err != nil {
-		panic(err)
-	}
 	h := server.Default(
 		server.WithHostPorts(fmt.Sprintf("%s:%d", config.Host, config.Port)),
 		server.WithMaxRequestBodySize(15*size.MiB),
-		server.WithTLS(cfg),
 	)
 	h.LoadHTMLGlob("templates/*")
 	h.Static("/static", "./")

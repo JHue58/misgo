@@ -1,5 +1,5 @@
 #!/bin/bash
-version="v1.3.6"
+version="v1.3.7"
 project="misgo"
 
 go mod tidy

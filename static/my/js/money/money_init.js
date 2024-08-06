@@ -1,6 +1,7 @@
 
 let global_uid
 const loading_div = '<div class="spinner-border"></div>'
+const loading_div_2 = `<div class="spinner-grow" role="status"></div>`
 
 const null_div = '<div class="empty">\n' +
     '  <div class="empty-icon">\n' +
@@ -122,9 +123,17 @@ function init_user_info(uid){
 
 function init_transaction_personal(uid){
     const radios= document.querySelectorAll('input[name="daily"]');
+    const dailyLoading = document.getElementById('daily-loading');
     radios.forEach(radio => {
         radio.addEventListener('change', function (event){
-            init_transaction_personal_daily(event.target.value)
+            dailyLoading.style.visibility = "visible"
+            event.target.disabled = true
+            init_transaction_personal_daily(event.target.value,function (){
+                event.target.disabled = false
+
+                dailyLoading.style.visibility = "hidden"
+            })
+
         });
     });
 
@@ -160,8 +169,16 @@ function init_transaction_personal(uid){
     )
 }
 
-function init_transaction_personal_daily(days) {
+function init_transaction_personal_daily(days,whenUpdated) {
     const uid = global_uid
+
+
+
+    // 三个对应的图表
+    const chartIncomePie = document.getElementById("chart-income-pie")
+    const chartExpenditurePie = document.getElementById("chart-expenditure-pie")
+    const chartDaily = document.getElementById('chart-daily')
+
 
     // 获取当前日期
     let currentDate = new Date();
@@ -235,7 +252,7 @@ function init_transaction_personal_daily(days) {
                 }
             }
         });
-        const chartIncomePie = document.getElementById("chart-income-pie")
+
         chartIncomePie.innerHTML = ""
         window.ApexCharts && (new ApexCharts(chartIncomePie, {
             chart: {
@@ -285,7 +302,7 @@ function init_transaction_personal_daily(days) {
 
         })).render();
 
-        const chartExpenditurePie = document.getElementById("chart-expenditure-pie")
+
         chartExpenditurePie.innerHTML = ""
         window.ApexCharts && (new ApexCharts(chartExpenditurePie, {
             chart: {
@@ -335,7 +352,7 @@ function init_transaction_personal_daily(days) {
 
         })).render();
 
-        const chartDaily = document.getElementById('chart-daily')
+
         chartDaily.innerHTML = ""
         window.ApexCharts && (new ApexCharts(chartDaily, {
             chart: {
@@ -412,6 +429,10 @@ function init_transaction_personal_daily(days) {
                 },
             },
         })).render();
+
+        if (whenUpdated!=null){
+            whenUpdated();
+        }
 
     })
 
@@ -581,7 +602,7 @@ function delete_func(event){
     const alertDiv = document.getElementById("table-alert")
     primaryBtn.addEventListener("click",function (){
         btnDiv.innerHTML = loading_div
-        
+
 
         let req = {
             uid :document.getElementById('uid-input').value,
@@ -642,7 +663,7 @@ function bill_inner(limit,offset){
             return
         }
 
-        billTable.innerHTML = loading_div
+        //billTable.innerHTML = loading_div
         let req = {
             count : limit,
             start : offset,

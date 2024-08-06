@@ -19,8 +19,10 @@ class LimitTables {
     offset = 0;
     dom;
     table_update_func;
+    btm_class;
 
     constructor(dom,limit,btm_class,table_update_func) {
+        this.btm_class = btm_class
         this.limit = limit;
         this.dom = dom;
         this.left_btm_dom = document.createElement('button');
@@ -77,6 +79,7 @@ class LimitTables {
     setRightDisable(){
         this.right_btm_dom.setAttribute('style','display: none')
     }
+
     setLeftEnable(){
         this.left_btm_dom.removeAttribute('style')
     }
@@ -84,8 +87,28 @@ class LimitTables {
         this.right_btm_dom.removeAttribute('style')
     }
 
+    setLeftLoading(isLoading){
+        if (isLoading){
+            this.left_btm_dom.setAttribute('class',this.btm_class+" btn-loading");
+        }else{
+            this.left_btm_dom.setAttribute('class',this.btm_class);
+        }
+
+    }
+
+    setRightLoading(isLoading){
+        if (isLoading){
+            this.right_btm_dom.setAttribute('class',this.btm_class+" btn-loading");
+        }else{
+            this.right_btm_dom.setAttribute('class',this.btm_class);
+        }
+
+    }
+
     update_btm(res_promise) {
         res_promise.then((length) => { // 使用箭头函数定义回调函数
+            this.setLeftLoading(false)
+            this.setRightLoading(false)
             if (length < this.limit) {
                 this.setRightDisable();
             } else {
@@ -100,11 +123,13 @@ class LimitTables {
     }
 
     leftBtmOnClick = () => {
+        this.setLeftLoading(true)
         this.index--;
         this.offset = this.offset - this.limit;
         this.update_btm(this.table_update_func(this.limit, this.offset));
     }
     rightBtmOnClick = () => {
+        this.setRightLoading(true)
         this.index++;
         this.offset = this.offset + this.limit;
         //console.log(this.offset)

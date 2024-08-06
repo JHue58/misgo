@@ -82,7 +82,7 @@ func TransactionPut(ctx context.Context, c *app.RequestContext) {
 	}
 
 	bizCtx.Success()
-	mislog.DefaultLogger.Infof("Money Success [Name] %s \n", u.Name)
+	mislog.DefaultLogger.Infof("Money Success [Name] %s [Transaction] %s \n", u.Name, entry.String())
 }
 
 // TransactionGet .
