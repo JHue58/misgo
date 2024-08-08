@@ -263,7 +263,7 @@ function init_transaction_personal_daily(days,whenUpdated) {
                     enabled: true
                 },
                 animations: {
-                    enabled: false
+                    enabled: true
                 },
             },
 
@@ -313,7 +313,7 @@ function init_transaction_personal_daily(days,whenUpdated) {
                     enabled: true
                 },
                 animations: {
-                    enabled: false
+                    enabled: true
                 },
             },
 
@@ -356,7 +356,7 @@ function init_transaction_personal_daily(days,whenUpdated) {
         chartDaily.innerHTML = ""
         window.ApexCharts && (new ApexCharts(chartDaily, {
             chart: {
-                type: "line",
+                type: "area",
                 fontFamily: 'inherit',
                 height: 240,
                 parentHeightOffset: 0,
@@ -364,12 +364,15 @@ function init_transaction_personal_daily(days,whenUpdated) {
                     show: false,
                 },
                 animations: {
-                    enabled: false
+                    enabled: true
                 },
             },
 
             fill: {
                 opacity: 1,
+            },
+            dataLabels: {
+                enabled: false
             },
             stroke: {
                 width: 2,
@@ -413,7 +416,7 @@ function init_transaction_personal_daily(days,whenUpdated) {
 
             },
             labels: Object.keys(dailies),
-            colors: [tabler.getColor("yellow"), tabler.getColor("green"), tabler.getColor("primary")],
+            colors: [ tabler.getColor("red"), tabler.getColor("green")],
             legend: {
                 show: true,
                 position: 'bottom',
@@ -535,6 +538,21 @@ function transaction_view_init(params,viewData) {
     }else{
         expenditureDiv.innerHTML = "无"
     }
+
+    const balanceDiv = document.getElementById('balance-view')
+    if ('Balance' in viewData){
+        if (viewData.Balance>0){
+            balanceDiv.innerHTML = "+"+viewData.Balance
+            balanceDiv.className = 'status status-green'
+        }else {
+            balanceDiv.innerHTML = viewData.Balance
+            balanceDiv.className = 'status status-red'
+        }
+    }else{
+        balanceDiv.innerHTML = "0"
+        balanceDiv.className = 'status status-cyan'
+    }
+
     const largestIncomeDiv = document.getElementById('largest-income-view')
     if ('LargestIncome' in viewData){
         let date = formatTimestamp(viewData.LargestIncome.time)

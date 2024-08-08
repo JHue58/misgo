@@ -28,10 +28,12 @@ message TransactionView {
   float Income = 4;
   // 总支出
   float Expenditure = 5;
+  // 余额变动
+  float Balance = 6;
   // 最大收入
-  Transaction LargestIncome = 6;
+  Transaction LargestIncome = 7;
   // 最大支出
-  Transaction LargestExpenditure = 7;
+  Transaction LargestExpenditure = 8;
 }
 
 message TransactionReq {

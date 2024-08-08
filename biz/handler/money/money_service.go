@@ -230,6 +230,7 @@ func TransactionGetView(ctx context.Context, c *app.RequestContext) {
 		ExpenditureCount: expenditureCount,
 		Income:           float32(totalIncome),
 		Expenditure:      float32(totalExpenditure),
+		Balance:          float32(totalIncome - totalExpenditure),
 	}
 	if incomeCount > 0 {
 		resp.LargestIncome = &money.Transaction{
