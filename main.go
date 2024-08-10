@@ -43,7 +43,10 @@ func main() {
 	h.NoRoute(func(c context.Context, ctx *app.RequestContext) {
 		ctx.HTML(200, "404.html", nil)
 	})
-	h.Use(middleware.UIDExtractMiddleware())
+	h.Use(
+		middleware.PprofMiddleware(),
+		middleware.UIDExtractMiddleware(),
+	)
 	register(h)
 	h.Spin()
 }

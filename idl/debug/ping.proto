@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package debug;
+
+option go_package = "debug";
+
+import "api.proto";
+import "base/empty.proto";
+
+
+message DebugResp {
+  string Message = 1;
+}
+
+
+service DebugService{
+  rpc Debug(base.Empty) returns(DebugResp) {
+    option (api.get) = "api/debug";
+  }
+}

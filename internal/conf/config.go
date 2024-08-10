@@ -56,8 +56,9 @@ type DBConfig struct {
 }
 
 type LogConfig struct {
-	Level   string `yaml:"level"`
-	LogPath string `yaml:"logPath"`
+	Level             string `yaml:"level"`
+	LogPath           string `yaml:"logPath"`
+	SnapshotLineCount int    `yaml:"snapshotLineCount"`
 }
 
 func (c LogConfig) HLevel() (level hlog.Level) {

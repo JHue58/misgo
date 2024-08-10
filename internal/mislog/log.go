@@ -1,6 +1,7 @@
 package mislog
 
 import (
+	"fmt"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/jhue/misgo/internal/conf"
 	"io"
@@ -14,10 +15,10 @@ type logger struct {
 	stdLog hlog.FullLogger
 	level  hlog.Level
 	c      *controller
+	f      io.Writer
 }
 
 func InitLogger(f io.Writer, config conf.LogConfig) {
-
 	fileWriter := io.MultiWriter(f, os.Stdout)
 	hlog.SetLevel(config.HLevel())
 	hlog.SetOutput(fileWriter)
@@ -25,6 +26,7 @@ func InitLogger(f io.Writer, config conf.LogConfig) {
 		stdLog: hlog.DefaultLogger(),
 		level:  config.HLevel(),
 		c:      newController(10, hlog.LevelInfo, time.Second),
+		f:      f,
 	}
 
 }
@@ -125,4 +127,62 @@ func (l *logger) Fatalf(format string, v ...interface{}) {
 		return
 	}
 	l.stdLog.Fatalf(format, v...)
+}
+
+func (l *logger) Snapshot() (str string, err error) {
+	config := conf.GetConfig()
+
+	lineCount := config.SnapshotLineCount
+
+	file, ok := l.f.(*os.File)
+	if !ok {
+		return "", fmt.Errorf("logIO is %T, but not *os.File ", file)
+	}
+	path := file.Name()
+	file, err = os.OpenFile(path, os.O_RDONLY, 0644)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	stat, err := file.Stat()
+	if err != nil {
+
+		return
+	}
+
+	// 文件的大小
+	fileSize := stat.Size()
+
+	// 逐行从文件末尾向前读取
+	buf := make([]byte, 1)
+	bufs := make([]byte, 0)
+
+	var lined int
+	for i := fileSize - 1; i >= 0; i-- {
+		if lined >= lineCount {
+			break
+		}
+		_, err := file.Seek(i, 0)
+		if err != nil {
+			return "", err
+		}
+		_, err = file.Read(buf)
+		if err != nil {
+			return "", err
+		}
+
+		if buf[0] == '\n' {
+			lined += 1
+		}
+		bufs = append(bufs, buf[0])
+	}
+	length := len(bufs)
+	r := make([]byte, length)
+
+	for i := 0; i < length; i++ {
+		r[i] = bufs[length-i-1]
+	}
+
+	// 拼接结果
+	return string(r), nil
 }

@@ -10,4 +10,5 @@ dbConfig:
 logConfig:
   level: info
   logPath: ./log
+  snapshotLineCount: 200
 

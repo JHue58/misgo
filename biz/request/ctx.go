@@ -50,6 +50,10 @@ func (c *BizContext) Fail(code Code, errorMsg string) {
 	c.a.Abort()
 }
 
+func (c *BizContext) Text(str string) {
+	c.a.String(consts.StatusOK, str)
+}
+
 func (c *BizContext) Success() {
 	successResp := base.CommonResp{
 		Code:    int64(Success),
