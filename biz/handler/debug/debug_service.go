@@ -6,14 +6,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/jhue/misgo/biz"
 	"github.com/jhue/misgo/biz/middleware"
 	"github.com/jhue/misgo/biz/request"
+	"github.com/jhue/misgo/internal/clock"
 	"github.com/jhue/misgo/internal/conf"
 	"github.com/jhue/misgo/internal/mislog"
-	"time"
-
-	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/jhue/misgo/pkg/formater"
 )
 
 // Debug .
@@ -22,11 +22,9 @@ func Debug(ctx context.Context, c *app.RequestContext) {
 	bizCtx := request.NewBizContext(c)
 	var err error
 
-	sp, err := mislog.DefaultLogger.Snapshot()
-	if err != nil {
-		bizCtx.ServerError(err)
-		return
-	}
+	var builder formater.Builder
+
+	builder.WriteStringItem("服务器Clock", fmt.Sprintf("服务器已运行 %s ", clock.BootSince().String()))
 
 	sysConfig := conf.GetConfig()
 	bizConfig := biz.GetBizConfig()
@@ -43,6 +41,9 @@ func Debug(ctx context.Context, c *app.RequestContext) {
 		bizCtx.ServerError(err)
 	}
 
+	builder.WriteBytesItem("SysConfig", sysConfigJSON)
+	builder.WriteBytesItem("BizConfig", bizConfigJSON)
+
 	var pprofString string
 	v := ctx.Value(middleware.PprofKey{})
 	p, ok := v.(*middleware.Pprof)
@@ -55,15 +56,13 @@ func Debug(ctx context.Context, c *app.RequestContext) {
 		pprofString = "无法获取Pprof信息"
 	}
 
-	output := fmt.Sprintf(
-		"Server时钟:\n%s\n\n日志信息(后%d行):\n%s\n\nSysConfig:\n%s\n\nBizConfig:\n%s\n\n性能分析:\n%s",
-		time.Now().String(),
-		sysConfig.SnapshotLineCount,
-		sp,
-		sysConfigJSON,
-		bizConfigJSON,
-		pprofString,
-	)
+	builder.WriteStringItem("性能分析", pprofString)
 
-	bizCtx.Text(output)
+	err = mislog.DefaultLogger.Snapshot(builder.ItemWriter(fmt.Sprintf("日志信息(后%d行)", sysConfig.SnapshotLineCount)))
+	if err != nil {
+		bizCtx.ServerError(err)
+		return
+	}
+
+	bizCtx.Text(builder.String())
 }

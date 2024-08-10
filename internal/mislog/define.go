@@ -1,11 +1,14 @@
 package mislog
 
-import "github.com/cloudwego/hertz/pkg/common/hlog"
+import (
+	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"github.com/jhue/misgo/pkg/formater"
+)
 
 type Logger interface {
 	hlog.Logger
 	hlog.FormatLogger
-	Snapshot() (string, error)
+	Snapshot(item formater.Item) error
 }
 
 type Level hlog.Level

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/jhue/misgo/internal/conf"
+	"github.com/jhue/misgo/pkg/formater"
 	"io"
 	"os"
 	"time"
@@ -129,14 +130,14 @@ func (l *logger) Fatalf(format string, v ...interface{}) {
 	l.stdLog.Fatalf(format, v...)
 }
 
-func (l *logger) Snapshot() (str string, err error) {
+func (l *logger) Snapshot(item formater.Item) (err error) {
 	config := conf.GetConfig()
 
 	lineCount := config.SnapshotLineCount
 
 	file, ok := l.f.(*os.File)
 	if !ok {
-		return "", fmt.Errorf("logIO is %T, but not *os.File ", file)
+		return fmt.Errorf("logIO is %T, but not *os.File ", file)
 	}
 	path := file.Name()
 	file, err = os.OpenFile(path, os.O_RDONLY, 0644)
@@ -164,11 +165,11 @@ func (l *logger) Snapshot() (str string, err error) {
 		}
 		_, err := file.Seek(i, 0)
 		if err != nil {
-			return "", err
+			return err
 		}
 		_, err = file.Read(buf)
 		if err != nil {
-			return "", err
+			return err
 		}
 
 		if buf[0] == '\n' {
@@ -179,10 +180,16 @@ func (l *logger) Snapshot() (str string, err error) {
 	length := len(bufs)
 	r := make([]byte, length)
 
+	idx := 0
 	for i := 0; i < length; i++ {
 		r[i] = bufs[length-i-1]
-	}
+		if r[i] == '\n' {
+			item.WriteLineBytes(r[idx:i])
+			idx = i + 1
+			// 跳过换行
+		}
 
-	// 拼接结果
-	return string(r), nil
+	}
+	item.Done()
+	return nil
 }

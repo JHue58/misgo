@@ -1,9 +1,11 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/jhue/misgo/internal/mislog"
+	"github.com/jhue/misgo/pkg/formater"
 	"github.com/jhue58/latency/recorder"
 	"time"
 
@@ -13,6 +15,9 @@ import (
 	"strings"
 	"sync"
 )
+
+var apiSlice = []byte("/api/")
+var otherSlice = []byte("other")
 
 type PprofKey struct {
 }
@@ -26,7 +31,13 @@ func NewPProf() *Pprof {
 	return &Pprof{format: latency.DefaultFormat}
 }
 
-func (m *Pprof) Report() (str string) {
+func (m *Pprof) Report() string {
+	var builder formater.Builder
+	m.ReportWithBuilder(&builder)
+	return builder.String()
+}
+
+func (m *Pprof) ReportWithBuilder(builder *formater.Builder) {
 
 	dict := make(map[string]recorder.RecordedSnapshot)
 	m.mp.Range(func(key, value any) bool {
@@ -47,20 +58,20 @@ func (m *Pprof) Report() (str string) {
 		return true
 	})
 
-	var builder strings.Builder
 	for s, snapshot := range dict {
-		builder.WriteString(s)
-		builder.WriteString(" :\n")
-		builder.WriteString(m.format(snapshot))
-		builder.WriteByte('\n')
+		builder.WriteStringItem(s, m.format(snapshot))
 	}
-	return builder.String()
-
+	return
 }
 
 func (m *Pprof) Record(c *app.RequestContext, d duration.Duration) {
 	var builder strings.Builder
-	builder.Write(c.Request.Path())
+	path := c.Request.Path()
+	if !bytes.Contains(path, apiSlice) {
+		path = otherSlice
+	}
+
+	builder.Write(path)
 	builder.WriteByte(' ')
 	builder.Write(c.Method())
 	method := builder.String()
